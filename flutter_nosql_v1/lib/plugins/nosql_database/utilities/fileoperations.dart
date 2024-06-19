@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 Future<String> get _localPath async {
   final directory = await getApplicationDocumentsDirectory();
@@ -52,4 +53,16 @@ Future<bool> deleteFile(String filePath) async {
   } catch (e) {
     throw "Error reading JSON file: $e";
   }
+}
+
+Future<bool> checkPermissions() async {
+  PermissionStatus storagePermission = await Permission.storage.status;
+
+  if (!storagePermission.isGranted) {
+    // PermissionStatus status = await Permission.manageExternalStorage.request();
+
+    // return status.isGranted;
+  }
+
+  return true;
 }
