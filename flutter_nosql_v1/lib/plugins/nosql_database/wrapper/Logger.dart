@@ -82,7 +82,15 @@ class Logger {
 class Logging {
   final Logger _log = Logger();
 
+  void initializeLogger({required Map<String, dynamic> data}) {
+    _log.initialize(data: data);
+  }
+
   void log(String message) {
     _log.log(message);
+  }
+
+  Map<String, dynamic> loggerToJson() {
+    return _log.toJson();
   }
 }

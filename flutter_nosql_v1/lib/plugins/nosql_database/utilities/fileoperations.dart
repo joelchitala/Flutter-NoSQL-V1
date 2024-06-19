@@ -1,22 +1,21 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
-bool createDirectory(String path) {
-  Directory newDirectory = Directory(path);
+Future<String> get _localPath async {
+  final directory = await getApplicationDocumentsDirectory();
 
-  if (!newDirectory.existsSync()) {
-    newDirectory.createSync(recursive: true);
-    print('Directory created successfully.');
-    return true;
-  } else {
-    print('Directory already exists.');
-    return false;
-  }
+  return directory.path;
 }
 
-Future<Map<String, dynamic>?> readJsonFile(String filePath) async {
+Future<File> get _localFile async {
+  final path = await _localPath;
+  return File('$path/counter.txt');
+}
+
+Future<Map<String, dynamic>?> readFile(String filePath) async {
   try {
-    File file = File(filePath);
+    File file = await _localFile;
     if (await file.exists()) {
       String contents = await file.readAsString();
       Map<String, dynamic> jsonData = jsonDecode(contents);
@@ -25,20 +24,32 @@ Future<Map<String, dynamic>?> readJsonFile(String filePath) async {
       throw Exception("File not found");
     }
   } catch (e) {
-    print("Error reading JSON file: $e");
-    return null;
+    throw "Error reading JSON file: $e";
   }
 }
 
-Future<bool> writeJsonFile(
-    String filePath, Map<dynamic, dynamic> jsonData) async {
+Future<bool> writeFile(String filePath, Map<dynamic, dynamic> jsonData) async {
   try {
-    File file = File(filePath);
+    File file = await _localFile;
     String jsonString = jsonEncode(jsonData);
     await file.writeAsString(jsonString);
+
     return true;
   } catch (e) {
-    print("Error writing JSON file: $e");
-    return false;
+    throw "Error writing JSON file: $e";
+  }
+}
+
+Future<bool> deleteFile(String filePath) async {
+  try {
+    File file = await _localFile;
+    if (await file.exists()) {
+      await file.delete();
+      return true;
+    } else {
+      throw Exception("File not found");
+    }
+  } catch (e) {
+    throw "Error reading JSON file: $e";
   }
 }
