@@ -32,7 +32,7 @@ class NoSQLDatabase {
         },
       );
     } catch (e) {
-      return;
+      rethrow;
     }
   }
 

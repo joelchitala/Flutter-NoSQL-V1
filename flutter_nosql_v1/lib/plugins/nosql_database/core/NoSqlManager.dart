@@ -7,12 +7,20 @@ class NoSQLManager {
   String path = "database.json";
 
   NoSQLManager._();
-
   static final _instance = NoSQLManager._();
-
   factory NoSQLManager() => _instance;
 
-  void initialize({required Map<String, dynamic> data}) {}
+  void initialize({required Map<String, dynamic> data}) {
+    try {
+      var noSQLDB = NoSQLDatabase();
+
+      noSQLDB.initialize(data: data);
+
+      noSQLDatabase = noSQLDB;
+    } catch (e) {
+      throw "Error $e occured in initializing an instance of NoSQLDatabase";
+    }
+  }
 
   Map<String, dynamic> toJson() {
     return {

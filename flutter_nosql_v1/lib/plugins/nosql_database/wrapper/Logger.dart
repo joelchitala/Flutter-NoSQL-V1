@@ -78,3 +78,11 @@ class Logger {
     };
   }
 }
+
+class Logging {
+  final Logger _log = Logger();
+
+  void log(String message) {
+    _log.log(message);
+  }
+}
