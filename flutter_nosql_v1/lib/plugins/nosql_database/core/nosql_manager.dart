@@ -18,6 +18,15 @@ class NoSQLManager {
     }
   }
 
+  NoSQLDatabase getNoSqlDatabase() {
+    // var transactional = _transactionManager.currentTransactional;
+
+    // if (transactional != null) {
+    //   return transactional.noSQLDatabase;
+    // }
+    return noSQLDatabase;
+  }
+
   Map<String, dynamic> toJson({
     required bool serialize,
   }) {

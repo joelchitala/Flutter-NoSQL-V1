@@ -111,8 +111,8 @@ class NoSQLUtility extends Logging {
 
   Future<bool> setCurrentDatabase({String? name}) async {
     name == null
-        ? _noSQLManager.noSQLDatabase.currentDatabase = null
-        : _noSQLManager.noSQLDatabase.currentDatabase =
+        ? _noSQLManager.getNoSqlDatabase().currentDatabase = null
+        : _noSQLManager.getNoSqlDatabase().currentDatabase =
             await getDatabase(reference: name);
 
     return true;
@@ -122,7 +122,7 @@ class NoSQLUtility extends Logging {
     required String name,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    Database? db = _noSQLManager.noSQLDatabase.databases[name];
+    Database? db = _noSQLManager.getNoSqlDatabase().databases[name];
     String? successMessage, errorMessage;
 
     if (name.isEmpty) {
@@ -145,7 +145,8 @@ class NoSQLUtility extends Logging {
       timestamp: DateTime.now(),
     );
 
-    bool results = _noSQLManager.noSQLDatabase.addDatabase(database: database);
+    bool results =
+        _noSQLManager.getNoSqlDatabase().addDatabase(database: database);
 
     if (results) {
       successMessage = "$name database successfully created";
@@ -165,7 +166,7 @@ class NoSQLUtility extends Logging {
     if (reference.contains(".")) {
       name = reference.split(".")[0];
     }
-    Database? db = _noSQLManager.noSQLDatabase.databases[name];
+    Database? db = _noSQLManager.getNoSqlDatabase().databases[name];
     return db;
   }
 
@@ -173,21 +174,26 @@ class NoSQLUtility extends Logging {
     bool Function(Database database)? query,
   }) async {
     return query == null
-        ? _noSQLManager.noSQLDatabase.databases.values.toList()
-        : _noSQLManager.noSQLDatabase.databases.values.where(query).toList();
+        ? _noSQLManager.getNoSqlDatabase().databases.values.toList()
+        : _noSQLManager
+            .getNoSqlDatabase()
+            .databases
+            .values
+            .where(query)
+            .toList();
   }
 
   Stream<List<Database>> getDatabaseStream({
     bool Function(Database database)? query,
   }) async* {
-    yield* _noSQLManager.noSQLDatabase.stream(query: query);
+    yield* _noSQLManager.getNoSqlDatabase().stream(query: query);
   }
 
   Future<bool> deleteDatabase({
     required String name,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    Database? db = _noSQLManager.noSQLDatabase.databases[name];
+    Database? db = _noSQLManager.getNoSqlDatabase().databases[name];
 
     String? successMessage, errorMessage;
 
@@ -201,7 +207,8 @@ class NoSQLUtility extends Logging {
 
         return false;
       }
-      bool results = _noSQLManager.noSQLDatabase.removeDatabase(database: db);
+      bool results =
+          _noSQLManager.getNoSqlDatabase().removeDatabase(database: db);
 
       if (results) {
         successMessage = "$name database successfully deleted";
@@ -233,7 +240,7 @@ class NoSQLUtility extends Logging {
       database = await getDatabase(reference: reference.split(".")[0]);
       collectionName = reference.split(".")[1];
     } else {
-      database = _noSQLManager.noSQLDatabase.currentDatabase;
+      database = _noSQLManager.getNoSqlDatabase().currentDatabase;
       collectionName = reference;
     }
 
@@ -283,10 +290,11 @@ class NoSQLUtility extends Logging {
     Collection? collection;
 
     if (reference.contains(".")) {
-      database = _noSQLManager.noSQLDatabase.databases[reference.split(".")[0]];
+      database =
+          _noSQLManager.getNoSqlDatabase().databases[reference.split(".")[0]];
       collection = database?.collections[reference.split(".")[1]];
     } else {
-      database = _noSQLManager.noSQLDatabase.currentDatabase;
+      database = _noSQLManager.getNoSqlDatabase().currentDatabase;
       collection = database?.collections[reference];
     }
 
@@ -309,9 +317,9 @@ class NoSQLUtility extends Logging {
     Database? database;
 
     if (databaseName == null) {
-      database = _noSQLManager.noSQLDatabase.currentDatabase;
+      database = _noSQLManager.getNoSqlDatabase().currentDatabase;
     } else {
-      database = _noSQLManager.noSQLDatabase.databases[databaseName];
+      database = _noSQLManager.getNoSqlDatabase().databases[databaseName];
     }
 
     if (database == null) {
@@ -334,7 +342,7 @@ class NoSQLUtility extends Logging {
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async* {
     Database? database = databaseName == null
-        ? _noSQLManager.noSQLDatabase.currentDatabase
+        ? _noSQLManager.getNoSqlDatabase().currentDatabase
         : await getDatabase(
             reference: databaseName,
             callback: ({error, res}) {
