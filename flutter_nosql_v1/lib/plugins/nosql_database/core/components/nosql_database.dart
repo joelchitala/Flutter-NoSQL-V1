@@ -1,9 +1,12 @@
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/Database.dart';
+import 'dart:async';
+
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/database.dart';
 
 class NoSQLDatabase {
   final double _version = 1.0;
   DateTime _timestamp = DateTime.now();
 
+  final _streamController = StreamController<List<Database>>.broadcast();
   Map<String, Database> databases = {};
   Database? currentDatabase;
   bool inMemoryOnlyMode;
@@ -36,7 +39,25 @@ class NoSQLDatabase {
     }
   }
 
-  bool addCollection({
+  Stream<List<Database>> stream({bool Function(Database database)? query}) {
+    if (query != null) {
+      return _streamController.stream.map((databases) {
+        return databases.where(query).toList();
+      });
+    }
+
+    return _streamController.stream;
+  }
+
+  void _broadcastChanges() {
+    _streamController.add(List<Database>.from(databases.values.toList()));
+  }
+
+  void dispose() {
+    _streamController.close();
+  }
+
+  bool addDatabase({
     required Database database,
   }) {
     bool results = true;
@@ -46,10 +67,12 @@ class NoSQLDatabase {
       return false;
     }
 
+    databases.addAll({database.name: database});
+    _broadcastChanges();
     return results;
   }
 
-  bool updateCollection({
+  bool updateDatabase({
     required Database database,
     required Map<String, dynamic> data,
   }) {
@@ -62,11 +85,11 @@ class NoSQLDatabase {
     }
 
     object.update(data: data);
-
+    _broadcastChanges();
     return results;
   }
 
-  bool removeCollection({
+  bool removeDatabase({
     required Database database,
   }) {
     bool results = true;
@@ -76,6 +99,7 @@ class NoSQLDatabase {
     if (object == null) {
       return false;
     }
+    _broadcastChanges();
 
     return results;
   }

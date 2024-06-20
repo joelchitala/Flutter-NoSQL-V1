@@ -58,6 +58,20 @@ Future<bool> deleteFile(String filePath) async {
   }
 }
 
+Future<bool> cleanFile(String filePath) async {
+  try {
+    File file = await _localFile(filePath);
+    if (await file.exists()) {
+      await file.writeAsString("");
+      return true;
+    } else {
+      throw Exception("File not found");
+    }
+  } catch (e) {
+    throw "Error reading JSON file: $e";
+  }
+}
+
 Future<bool> checkStoragePermissions() async {
   PermissionStatus storagePermission = await Permission.storage.status;
 

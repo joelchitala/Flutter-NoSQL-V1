@@ -1,5 +1,3 @@
-// ignore_for_file: file_names
-
 abstract class BaseComponent {
   final String objectId;
   DateTime? timestamp;

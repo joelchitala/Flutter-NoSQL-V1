@@ -1,6 +1,6 @@
 import 'dart:math';
 
-const int RandomMax = 100000;
+const int randomMax = 100000;
 
 String generateTimeStamp() {
   DateTime now = DateTime.now();
@@ -13,7 +13,7 @@ String generateFullTimeStamp() {
 }
 
 String generateUUID() {
-  return "${Random().nextInt(RandomMax)}_${generateFullTimeStamp()}";
+  return "${Random().nextInt(randomMax)}_${generateFullTimeStamp()}";
 }
 
 bool isSimilar(List<dynamic> fullSet, List<dynamic> subSet) {
@@ -58,9 +58,7 @@ bool isSubset({
 
       if (!results && strict) return false;
     }
-  } catch (e) {
-    print(e);
-  }
+  } catch (_) {}
 
   return results;
 }

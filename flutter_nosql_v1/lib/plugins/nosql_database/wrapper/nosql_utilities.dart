@@ -1,19 +1,44 @@
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/NoSqlManager.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/Collection.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/Database.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/Document.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/collection.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/database.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/document.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/nosql_manager.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/fileoperations.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/utils.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/Logger.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/logger.dart';
 
 class NoSQLUtility extends Logging {
   final NoSQLManager _noSQLManager = NoSQLManager();
-  Database? currentDatabase;
-  late Map<String, Database> databases;
 
-  NoSQLUtility() {
-    databases = _noSQLManager.noSQLDatabase.databases;
-    currentDatabase = _noSQLManager.noSQLDatabase.currentDatabase;
+  NoSQLUtility();
+
+  Future<bool> clean({
+    String databasePath = "database.json",
+    String loggerPath = "logger.json",
+    required bool delete,
+  }) async {
+    bool results = true;
+
+    if (delete) {
+      return results;
+    }
+
+    bool savedDatabase = await cleanFile(
+      databasePath,
+    );
+
+    bool savedLogger = await cleanFile(
+      loggerPath,
+    );
+
+    if (!savedDatabase) {
+      log("Failed to clean database to path $databasePath");
+    }
+
+    if (!savedLogger) {
+      log("Failed to clean logger to path $loggerPath");
+    }
+
+    return results;
   }
 
   Future<bool> initialize({
@@ -52,13 +77,11 @@ class NoSQLUtility extends Logging {
     bool results = true;
 
     try {
-      var data = _noSQLManager.toJson(
-        serialize: true,
-      );
-
       bool savedDatabase = await writeFile(
         databasePath,
-        data,
+        _noSQLManager.toJson(
+          serialize: true,
+        ),
       );
 
       bool savedLogger = await writeFile(
@@ -99,7 +122,7 @@ class NoSQLUtility extends Logging {
     required String name,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    Database? db = databases[name];
+    Database? db = _noSQLManager.noSQLDatabase.databases[name];
     String? successMessage, errorMessage;
 
     if (name.isEmpty) {
@@ -122,32 +145,49 @@ class NoSQLUtility extends Logging {
       timestamp: DateTime.now(),
     );
 
-    databases.addAll({
-      name: database,
-    });
+    bool results = _noSQLManager.noSQLDatabase.addDatabase(database: database);
 
-    successMessage = "$name database successfully created";
-    log(successMessage);
-    if (callback != null) callback(res: (true, successMessage));
+    if (results) {
+      successMessage = "$name database successfully created";
+      log(successMessage);
+      if (callback != null) callback(res: (true, successMessage));
+    }
 
     return true;
   }
 
-  Future<Database?> getDatabase({required String reference}) async {
+  Future<Database?> getDatabase({
+    required String reference,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) async {
     String name = reference;
 
     if (reference.contains(".")) {
       name = reference.split(".")[0];
     }
-    Database? db = databases[name];
+    Database? db = _noSQLManager.noSQLDatabase.databases[name];
     return db;
+  }
+
+  Future<List<Database>> getDatabases({
+    bool Function(Database database)? query,
+  }) async {
+    return query == null
+        ? _noSQLManager.noSQLDatabase.databases.values.toList()
+        : _noSQLManager.noSQLDatabase.databases.values.where(query).toList();
+  }
+
+  Stream<List<Database>> getDatabaseStream({
+    bool Function(Database database)? query,
+  }) async* {
+    yield* _noSQLManager.noSQLDatabase.stream(query: query);
   }
 
   Future<bool> deleteDatabase({
     required String name,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    Database? db = databases[name];
+    Database? db = _noSQLManager.noSQLDatabase.databases[name];
 
     String? successMessage, errorMessage;
 
@@ -161,7 +201,7 @@ class NoSQLUtility extends Logging {
 
         return false;
       }
-      bool results = databases.remove(name) == null ? false : true;
+      bool results = _noSQLManager.noSQLDatabase.removeDatabase(database: db);
 
       if (results) {
         successMessage = "$name database successfully deleted";
@@ -193,7 +233,7 @@ class NoSQLUtility extends Logging {
       database = await getDatabase(reference: reference.split(".")[0]);
       collectionName = reference.split(".")[1];
     } else {
-      database = currentDatabase;
+      database = _noSQLManager.noSQLDatabase.currentDatabase;
       collectionName = reference;
     }
 
@@ -243,10 +283,10 @@ class NoSQLUtility extends Logging {
     Collection? collection;
 
     if (reference.contains(".")) {
-      database = databases[reference.split(".")[0]];
+      database = _noSQLManager.noSQLDatabase.databases[reference.split(".")[0]];
       collection = database?.collections[reference.split(".")[1]];
     } else {
-      database = currentDatabase;
+      database = _noSQLManager.noSQLDatabase.currentDatabase;
       collection = database?.collections[reference];
     }
 
@@ -259,6 +299,52 @@ class NoSQLUtility extends Logging {
     }
 
     return collection;
+  }
+
+  Future<List<Collection>> getCollections({
+    String? databaseName,
+    void Function(String errorMsg)? callback,
+    bool Function(Database database)? query,
+  }) async {
+    Database? database;
+
+    if (databaseName == null) {
+      database = _noSQLManager.noSQLDatabase.currentDatabase;
+    } else {
+      database = _noSQLManager.noSQLDatabase.databases[databaseName];
+    }
+
+    if (database == null) {
+      var msg =
+          "Database with the name $databaseName not found and current database is null";
+      if (callback != null) {
+        callback(
+          msg,
+        );
+      }
+      log(msg);
+      return [];
+    }
+    return database.collections.values.toList();
+  }
+
+  Stream<List<Collection>> getCollectionStream({
+    String? databaseName,
+    bool Function(Collection collection)? query,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) async* {
+    Database? database = databaseName == null
+        ? _noSQLManager.noSQLDatabase.currentDatabase
+        : await getDatabase(
+            reference: databaseName,
+            callback: ({error, res}) {
+              if (callback != null) callback(error: error);
+            },
+          );
+
+    if (database == null) yield* Stream<List<Collection>>.value([]);
+
+    yield* database!.stream(query: query);
   }
 
   Future<bool> deleteCollection({
@@ -375,9 +461,9 @@ class NoSQLUtility extends Logging {
     return results;
   }
 
-  Future<List<Document>> getDocument({
+  Future<List<Document>> getDocuments({
     required String reference,
-    required bool Function(Document document) query,
+    bool Function(Document document)? query,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
     Collection? collection = await getCollection(
@@ -389,14 +475,16 @@ class NoSQLUtility extends Logging {
 
     if (collection == null) return [];
 
-    return collection.documents.values.where(query).toList();
+    return query == null
+        ? collection.documents.values.toList()
+        : collection.documents.values.where(query).toList();
   }
 
-  Future<Stream<List<Document>>> getDocumentStream({
+  Stream<List<Document>> getDocumentStream({
     required String reference,
-    required bool Function(Document document) query,
+    bool Function(Document document)? query,
     void Function({String? error, (bool res, String msg)? res})? callback,
-  }) async {
+  }) async* {
     Collection? collection = await getCollection(
       reference: reference,
       callback: (errorMsg) {
@@ -404,9 +492,9 @@ class NoSQLUtility extends Logging {
       },
     );
 
-    if (collection == null) return Stream<List<Document>>.value([]);
+    if (collection == null) yield* Stream<List<Document>>.value([]);
 
-    return collection.stream(query: query);
+    yield* collection!.stream(query: query);
   }
 
   Future<bool> updateDocument({

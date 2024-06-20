@@ -1,4 +1,4 @@
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/NoSQLDatabase.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/nosql_database.dart';
 
 class NoSQLManager {
   final double _version = 1.0;
@@ -12,11 +12,7 @@ class NoSQLManager {
 
   void initialize({required Map<String, dynamic> data}) {
     try {
-      var noSQLDB = NoSQLDatabase();
-
-      noSQLDB.initialize(data: data["noSQLDatabase"]);
-
-      noSQLDatabase = noSQLDB;
+      noSQLDatabase.initialize(data: data["noSQLDatabase"]);
     } catch (e) {
       throw "Error $e occured in initializing an instance of NoSQLDatabase";
     }
