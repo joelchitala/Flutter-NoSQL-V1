@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/fileoperations.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/NoSqlUtilities.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -50,10 +51,17 @@ class _NoSQLStatefulWrapperState extends State<NoSQLStatefulWrapper>
 
   @override
   Widget build(BuildContext context) {
-    noSQLUtility.createDatabase(name: "school");
-    noSQLUtility.createCollection(
-      reference: "school.students",
-    );
+    // noSQLUtility.createDatabase(name: "school");
+    // noSQLUtility.createCollection(
+    //   reference: "school.students",
+    // );
+    // noSQLUtility.insertDocument(
+    //   reference: "school.students",
+    //   data: {"name": "Joel"},
+    //   callback: ({error, res}) {
+    //     print(error);
+    //   },
+    // );
 
     return Scaffold(
       appBar: AppBar(
@@ -78,9 +86,20 @@ class _NoSQLStatefulWrapperState extends State<NoSQLStatefulWrapper>
                 children: [
                   GestureDetector(
                     onTap: () async {
-                      setData(
-                        await noSQLUtility.noSQLDatabaseToJson(serialize: true),
-                      );
+                      // setData(
+                      //   await noSQLUtility.noSQLDatabaseToJson(serialize: true),
+                      // );
+
+                      try {
+                        await noSQLUtility.initialize();
+                        setData(
+                          await noSQLUtility.noSQLDatabaseToJson(
+                            serialize: true,
+                          ),
+                        );
+                      } catch (e) {
+                        print(e);
+                      }
                     },
                     child: Container(
                       padding: const EdgeInsets.all(8.0),
@@ -92,7 +111,9 @@ class _NoSQLStatefulWrapperState extends State<NoSQLStatefulWrapper>
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () async {
+                      bool res = await noSQLUtility.commitToDisk();
+                    },
                     child: Container(
                       padding: const EdgeInsets.all(8.0),
                       decoration: BoxDecoration(

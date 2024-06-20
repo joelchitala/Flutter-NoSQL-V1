@@ -52,11 +52,13 @@ class NoSQLUtility extends Logging {
     bool results = true;
 
     try {
+      var data = _noSQLManager.toJson(
+        serialize: true,
+      );
+
       bool savedDatabase = await writeFile(
         databasePath,
-        _noSQLManager.toJson(
-          serialize: true,
-        ),
+        data,
       );
 
       bool savedLogger = await writeFile(

@@ -2,7 +2,7 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/BaseComp
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/EntityTypes.dart';
 
 class Document extends BaseComponent {
-  EntityType type = EntityType.collection;
+  EntityType type = EntityType.document;
   Map<String, dynamic> fields = {};
 
   Document({
@@ -12,7 +12,7 @@ class Document extends BaseComponent {
 
   factory Document.fromJson({required Map<String, dynamic> data}) {
     Document document = Document(
-      objectId: data["_objectId"],
+      objectId: data["objectId"],
       timestamp: DateTime.tryParse("${data["timestamp"]}"),
     );
 

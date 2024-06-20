@@ -18,11 +18,11 @@ class NoSQLDatabase {
         return;
       }
 
-      _timestamp = DateTime.tryParse(data["timestamp"]) ?? _timestamp;
+      _timestamp = DateTime.tryParse("${data["_timestamp"]}") ?? _timestamp;
 
-      Map<String, dynamic>? databases = data["databases"];
+      Map<String, dynamic>? jsonDatabases = data["databases"];
 
-      databases?.forEach(
+      jsonDatabases?.forEach(
         (key, value) {
           databases.addAll(
             {
@@ -95,6 +95,7 @@ class NoSQLDatabase {
 
     return {
       "version": _version,
+      "_timestamp": _timestamp.toIso8601String(),
       "inMemoryOnlyMode": inMemoryOnlyMode,
       "databases": serialize ? databaseEntries : databases,
     };

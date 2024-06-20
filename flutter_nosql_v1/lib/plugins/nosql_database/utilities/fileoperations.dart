@@ -9,14 +9,14 @@ Future<String> get _localPath async {
   return directory.path;
 }
 
-Future<File> get _localFile async {
+Future<File> _localFile(String filePath) async {
   final path = await _localPath;
-  return File('$path/counter.txt');
+  return File("$path/$filePath");
 }
 
 Future<Map<String, dynamic>?> readFile(String filePath) async {
   try {
-    File file = await _localFile;
+    File file = await _localFile(filePath);
     if (await file.exists()) {
       String contents = await file.readAsString();
       Map<String, dynamic> jsonData = jsonDecode(contents);
@@ -31,10 +31,13 @@ Future<Map<String, dynamic>?> readFile(String filePath) async {
 
 Future<bool> writeFile(String filePath, Map<dynamic, dynamic> jsonData) async {
   try {
-    File file = await _localFile;
+    File file = await _localFile(filePath);
     String jsonString = jsonEncode(jsonData);
-    await file.writeAsString(jsonString);
 
+    if (!await file.exists()) {
+      await file.create();
+    }
+    await file.writeAsString(jsonString);
     return true;
   } catch (e) {
     throw "Error writing JSON file: $e";
@@ -43,7 +46,7 @@ Future<bool> writeFile(String filePath, Map<dynamic, dynamic> jsonData) async {
 
 Future<bool> deleteFile(String filePath) async {
   try {
-    File file = await _localFile;
+    File file = await _localFile(filePath);
     if (await file.exists()) {
       await file.delete();
       return true;

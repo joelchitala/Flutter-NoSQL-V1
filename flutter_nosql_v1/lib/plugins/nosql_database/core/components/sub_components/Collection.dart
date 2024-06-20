@@ -7,7 +7,7 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_comp
 class Collection extends BaseComponent {
   final _streamController = StreamController<List<Document>>.broadcast();
   String name;
-  EntityType type = EntityType.document;
+  EntityType type = EntityType.collection;
   Map<String, Document> documents = {};
 
   Collection({
@@ -49,7 +49,7 @@ class Collection extends BaseComponent {
     }
 
     Collection collection = Collection(
-      objectId: data["_objectId"],
+      objectId: data["objectId"],
       name: data["name"],
       timestamp: DateTime.tryParse("${data["timestamp"]}"),
     );

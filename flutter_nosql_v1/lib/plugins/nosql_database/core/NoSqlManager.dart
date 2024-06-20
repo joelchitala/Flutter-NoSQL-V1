@@ -14,7 +14,7 @@ class NoSQLManager {
     try {
       var noSQLDB = NoSQLDatabase();
 
-      noSQLDB.initialize(data: data);
+      noSQLDB.initialize(data: data["noSQLDatabase"]);
 
       noSQLDatabase = noSQLDB;
     } catch (e) {
