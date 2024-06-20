@@ -55,13 +55,13 @@ Future<bool> deleteFile(String filePath) async {
   }
 }
 
-Future<bool> checkPermissions() async {
+Future<bool> checkStoragePermissions() async {
   PermissionStatus storagePermission = await Permission.storage.status;
 
   if (!storagePermission.isGranted) {
-    // PermissionStatus status = await Permission.manageExternalStorage.request();
+    PermissionStatus status = await Permission.manageExternalStorage.request();
 
-    // return status.isGranted;
+    return status.isGranted;
   }
 
   return true;

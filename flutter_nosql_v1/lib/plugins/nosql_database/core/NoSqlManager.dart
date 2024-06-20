@@ -22,10 +22,14 @@ class NoSQLManager {
     }
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson({
+    required bool serialize,
+  }) {
     return {
       "version": _version,
-      "noSQLDatabase": noSQLDatabase,
+      "noSQLDatabase": serialize
+          ? noSQLDatabase.toJson(serialize: serialize)
+          : noSQLDatabase,
     };
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/NoSqlManager.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/Collection.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/Database.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/Document.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/fileoperations.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/utils.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/Logger.dart';
@@ -13,14 +14,6 @@ class NoSQLUtility extends Logging {
   NoSQLUtility() {
     databases = _noSQLManager.noSQLDatabase.databases;
     currentDatabase = _noSQLManager.noSQLDatabase.currentDatabase;
-  }
-  Future<bool> setCurrentDatabase({String? name}) async {
-    name == null
-        ? _noSQLManager.noSQLDatabase.currentDatabase = null
-        : _noSQLManager.noSQLDatabase.currentDatabase =
-            await getDatabase(reference: name);
-
-    return true;
   }
 
   Future<bool> initialize({
@@ -61,7 +54,7 @@ class NoSQLUtility extends Logging {
     try {
       bool savedDatabase = await writeFile(
         databasePath,
-        _noSQLManager.noSQLDatabase.toJson(
+        _noSQLManager.toJson(
           serialize: true,
         ),
       );
@@ -83,6 +76,21 @@ class NoSQLUtility extends Logging {
     }
 
     return results;
+  }
+
+  Future<Map<String, dynamic>> noSQLDatabaseToJson({
+    required bool serialize,
+  }) async {
+    return _noSQLManager.toJson(serialize: serialize);
+  }
+
+  Future<bool> setCurrentDatabase({String? name}) async {
+    name == null
+        ? _noSQLManager.noSQLDatabase.currentDatabase = null
+        : _noSQLManager.noSQLDatabase.currentDatabase =
+            await getDatabase(reference: name);
+
+    return true;
   }
 
   Future<bool> createDatabase({
@@ -225,7 +233,10 @@ class NoSQLUtility extends Logging {
     return results;
   }
 
-  Future<Collection?> getCollection({required String reference}) async {
+  Future<Collection?> getCollection({
+    required String reference,
+    void Function(String errorMsg)? callback,
+  }) async {
     Database? database;
     Collection? collection;
 
@@ -237,8 +248,12 @@ class NoSQLUtility extends Logging {
       collection = database?.collections[reference];
     }
 
-    if (database == null || collection == null) {
-      return null;
+    String? errorMessage;
+
+    if (collection == null) {
+      errorMessage = "Collection with the reference $reference not found";
+      log(errorMessage);
+      if (callback != null) callback(errorMessage);
     }
 
     return collection;
@@ -263,7 +278,6 @@ class NoSQLUtility extends Logging {
 
     if (collection == null) {
       errorMessage = "Collection with the reference $reference not found";
-      log(errorMessage);
       if (callback != null) callback(error: errorMessage);
       return false;
     }
@@ -278,6 +292,239 @@ class NoSQLUtility extends Logging {
       errorMessage =
           "Failed to delete Collection with the reference $reference";
       log(errorMessage);
+      if (callback != null) callback(error: errorMessage);
+    }
+
+    return results;
+  }
+
+  Future<bool> insertDocument({
+    required String reference,
+    required Map<String, dynamic> data,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) async {
+    Collection? collection = await getCollection(
+      reference: reference,
+      callback: (errorMsg) {
+        if (callback != null) callback(error: errorMsg);
+      },
+    );
+
+    if (collection == null) return false;
+
+    Document document = Document(
+      objectId: generateUUID(),
+      timestamp: DateTime.now(),
+    );
+    document.addField(field: data);
+
+    bool results = collection.addDocument(document: document);
+
+    // if (callback != null) callback(res: (results,""));
+
+    return results;
+  }
+
+  Future<bool> insertDocuments({
+    required String reference,
+    required List<Map<String, dynamic>> data,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) async {
+    Collection? collection = await getCollection(
+      reference: reference,
+      callback: (errorMsg) {
+        if (callback != null) callback(error: errorMsg);
+      },
+    );
+
+    if (collection == null) return false;
+
+    bool results = true;
+
+    List<Document> failedDocuments = [];
+
+    for (var field in data) {
+      bool docRes = true;
+      Document document = Document(
+        objectId: generateUUID(),
+        timestamp: DateTime.now(),
+      );
+      document.addField(field: field);
+
+      docRes = collection.addDocument(document: document);
+
+      if (!docRes) {
+        failedDocuments.add(document);
+        results = false;
+      }
+    }
+
+    if (!results) {
+      String errorMessage = "failed to insert documents: ${failedDocuments.map(
+        (document) => document.toJson(
+          serialize: true,
+        ),
+      )}";
+      log(errorMessage);
+
+      if (callback != null) callback(error: errorMessage);
+    }
+
+    return results;
+  }
+
+  Future<List<Document>> getDocument({
+    required String reference,
+    required bool Function(Document document) query,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) async {
+    Collection? collection = await getCollection(
+      reference: reference,
+      callback: (errorMsg) {
+        if (callback != null) callback(error: errorMsg);
+      },
+    );
+
+    if (collection == null) return [];
+
+    return collection.documents.values.where(query).toList();
+  }
+
+  Future<Stream<List<Document>>> getDocumentStream({
+    required String reference,
+    required bool Function(Document document) query,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) async {
+    Collection? collection = await getCollection(
+      reference: reference,
+      callback: (errorMsg) {
+        if (callback != null) callback(error: errorMsg);
+      },
+    );
+
+    if (collection == null) return Stream<List<Document>>.value([]);
+
+    return collection.stream(query: query);
+  }
+
+  Future<bool> updateDocument({
+    required String reference,
+    required bool Function(Document document) query,
+    required Map<String, dynamic> data,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) async {
+    Collection? collection = await getCollection(
+      reference: reference,
+      callback: (errorMsg) {
+        if (callback != null) callback(error: errorMsg);
+      },
+    );
+
+    if (collection == null) return false;
+
+    Document? document = collection.documents.values.where(query).firstOrNull;
+
+    if (document == null) {
+      if (callback != null) {
+        callback(error: "Document not found");
+      }
+      return false;
+    }
+
+    bool results = collection.updateDocument(document: document, data: data);
+
+    if (results) {
+      if (callback != null) {
+        callback(res: (true, "Document updated"));
+      }
+    } else {
+      if (callback != null) {
+        callback(
+          error: "Failed to update document $document",
+        );
+      }
+    }
+
+    return results;
+  }
+
+  Future<bool> removeDocument({
+    required String reference,
+    required bool Function(Document document) query,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) async {
+    Collection? collection = await getCollection(
+      reference: reference,
+      callback: (errorMsg) {
+        if (callback != null) callback(error: errorMsg);
+      },
+    );
+
+    if (collection == null) return false;
+
+    Document? document = collection.documents.values.where(query).firstOrNull;
+
+    if (document == null) {
+      if (callback != null) {
+        callback(error: "Document not found");
+      }
+      return false;
+    }
+
+    bool results = collection.removeDocument(document: document);
+
+    if (results) {
+      if (callback != null) {
+        callback(res: (true, "Document deleted"));
+      }
+    } else {
+      if (callback != null) {
+        callback(
+          error: "Failed to delete document $document",
+        );
+      }
+    }
+
+    return true;
+  }
+
+  Future<bool> removeDocuments({
+    required String reference,
+    required bool Function(Document document) query,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) async {
+    Collection? collection = await getCollection(
+      reference: reference,
+      callback: (errorMsg) {
+        if (callback != null) callback(error: errorMsg);
+      },
+    );
+
+    if (collection == null) return false;
+
+    var documents = collection.documents.values.where(query).toList();
+
+    bool results = true;
+
+    List<Document> failedDocuments = [];
+
+    for (var document in documents) {
+      bool docRes = collection.removeDocument(document: document);
+
+      if (!docRes) {
+        failedDocuments.add(document);
+        results = false;
+      }
+    }
+
+    if (!results) {
+      String errorMessage = "Failed to delete documents: ${failedDocuments.map(
+        (document) => document.toJson(
+          serialize: true,
+        ),
+      )}";
+      log(errorMessage);
+
       if (callback != null) callback(error: errorMessage);
     }
 

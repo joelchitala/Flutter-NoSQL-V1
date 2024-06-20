@@ -3,20 +3,20 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/EntityTy
 
 class Document extends BaseComponent {
   EntityType type = EntityType.collection;
-  Map<String, dynamic> fields;
+  Map<String, dynamic> fields = {};
 
   Document({
     required super.objectId,
     super.timestamp,
-    this.fields = const {},
   });
 
   factory Document.fromJson({required Map<String, dynamic> data}) {
     Document document = Document(
       objectId: data["_objectId"],
       timestamp: DateTime.tryParse("${data["timestamp"]}"),
-      fields: data["fields"] ?? {},
     );
+
+    document.fields = data["fields"] ?? {};
 
     return document;
   }
@@ -94,6 +94,7 @@ class Document extends BaseComponent {
     return super.toJson(serialize: serialize)
       ..addAll(
         {
+          "type": serialize ? type.toString() : type,
           "fields": fields,
         },
       );

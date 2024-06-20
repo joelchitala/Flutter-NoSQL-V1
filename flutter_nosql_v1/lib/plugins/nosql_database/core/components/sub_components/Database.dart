@@ -5,13 +5,12 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_comp
 class Database extends BaseComponent {
   String name;
   EntityType type = EntityType.database;
-  Map<String, Collection> collections;
+  Map<String, Collection> collections = {};
 
   Database({
     required super.objectId,
     super.timestamp,
     required this.name,
-    this.collections = const {},
   });
 
   factory Database.fromJson({required Map<String, dynamic> data}) {
@@ -49,9 +48,10 @@ class Database extends BaseComponent {
     Database database = Database(
       objectId: data["objectId"],
       name: data["name"],
-      collections: collections,
       timestamp: DateTime.tryParse("${data["timestamp"]}"),
     );
+
+    database.collections = collections;
 
     return database;
   }
@@ -65,6 +65,8 @@ class Database extends BaseComponent {
     if (collections.containsKey(name)) {
       return false;
     }
+
+    collections.addAll({name: collection});
     return results;
   }
 
@@ -122,6 +124,7 @@ class Database extends BaseComponent {
       ..addAll(
         {
           "name": name,
+          "type": serialize ? type.toString() : type,
           "collections": serialize ? collectionEntries : collections,
         },
       );

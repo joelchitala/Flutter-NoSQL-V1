@@ -2,7 +2,7 @@
 
 abstract class BaseComponent {
   final String objectId;
-  late final DateTime? timestamp;
+  DateTime? timestamp;
 
   BaseComponent({
     required this.objectId,
