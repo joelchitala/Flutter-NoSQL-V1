@@ -1,4 +1,5 @@
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/nosql_database.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_transactional/nosql_transactional_manager.dart';
 
 class NoSQLManager {
   final double _version = 1.0;
@@ -19,12 +20,19 @@ class NoSQLManager {
   }
 
   NoSQLDatabase getNoSqlDatabase() {
-    // var transactional = _transactionManager.currentTransactional;
+    final NoSQLTransactionalManager transactionalManager =
+        NoSQLTransactionalManager();
 
-    // if (transactional != null) {
-    //   return transactional.noSQLDatabase;
-    // }
+    var transactional = transactionalManager.currentTransactional;
+
+    if (transactional != null) {
+      return transactional.noSQLDatabase ?? noSQLDatabase;
+    }
     return noSQLDatabase;
+  }
+
+  void setNoSqlDatabase(NoSQLDatabase db) {
+    noSQLDatabase = db;
   }
 
   Map<String, dynamic> toJson({

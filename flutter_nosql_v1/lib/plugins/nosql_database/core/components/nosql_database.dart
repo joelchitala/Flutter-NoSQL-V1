@@ -15,6 +15,23 @@ class NoSQLDatabase {
     this.inMemoryOnlyMode = false,
   });
 
+  NoSQLDatabase? noSQLDatabaseCopy() {
+    try {
+      NoSQLDatabase noSQLDatabase = NoSQLDatabase();
+
+      noSQLDatabase.setDatabase(toJson(serialize: false));
+
+      return noSQLDatabase;
+    } catch (_) {}
+
+    return null;
+  }
+
+  void setDatabase(Map<String, dynamic> data) {
+    inMemoryOnlyMode = data["inMemoryOnlyMode"] ?? inMemoryOnlyMode;
+    databases = data["databases"] ?? databases;
+  }
+
   void initialize({required Map<String, dynamic> data}) {
     try {
       if (inMemoryOnlyMode) {
@@ -121,7 +138,8 @@ class NoSQLDatabase {
       "version": _version,
       "_timestamp": _timestamp.toIso8601String(),
       "inMemoryOnlyMode": inMemoryOnlyMode,
-      "databases": serialize ? databaseEntries : databases,
+      "databases":
+          serialize ? databaseEntries : Map<String, Database>.from(databases),
     };
   }
 }

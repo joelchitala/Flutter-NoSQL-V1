@@ -2,11 +2,12 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_comp
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/database.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/document.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/nosql_manager.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_transactional/nosql_transactional_manager.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/fileoperations.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/utils.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/logger.dart';
 
-class NoSQLUtility extends Logging {
+class NoSQLUtility extends Logging with NoSQLTransactionalManagerWrapper {
   final NoSQLManager _noSQLManager = NoSQLManager();
 
   NoSQLUtility();
@@ -122,39 +123,41 @@ class NoSQLUtility extends Logging {
     required String name,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    Database? db = _noSQLManager.getNoSqlDatabase().databases[name];
-    String? successMessage, errorMessage;
+    return await opMapper(func: () async {
+      Database? db = _noSQLManager.getNoSqlDatabase().databases[name];
+      String? successMessage, errorMessage;
 
-    if (name.isEmpty) {
-      errorMessage = "Failed to create Database. name can not be empty";
-      log(errorMessage);
-      if (callback != null) callback(error: errorMessage);
-      return false;
-    }
+      if (name.isEmpty) {
+        errorMessage = "Failed to create Database. name can not be empty";
+        log(errorMessage);
+        if (callback != null) callback(error: errorMessage);
+        return false;
+      }
 
-    if (db != null) {
-      errorMessage = "Failed to create $name database, database exists";
-      log(errorMessage);
-      if (callback != null) callback(error: errorMessage);
-      return false;
-    }
+      if (db != null) {
+        errorMessage = "Failed to create $name database, database exists";
+        log(errorMessage);
+        if (callback != null) callback(error: errorMessage);
+        return false;
+      }
 
-    var database = Database(
-      objectId: generateUUID(),
-      name: name,
-      timestamp: DateTime.now(),
-    );
+      var database = Database(
+        objectId: generateUUID(),
+        name: name,
+        timestamp: DateTime.now(),
+      );
 
-    bool results =
-        _noSQLManager.getNoSqlDatabase().addDatabase(database: database);
+      bool results =
+          _noSQLManager.getNoSqlDatabase().addDatabase(database: database);
 
-    if (results) {
-      successMessage = "$name database successfully created";
-      log(successMessage);
-      if (callback != null) callback(res: (true, successMessage));
-    }
+      if (results) {
+        successMessage = "$name database successfully created";
+        log(successMessage);
+        if (callback != null) callback(res: (true, successMessage));
+      }
 
-    return true;
+      return true;
+    });
   }
 
   Future<Database?> getDatabase({
@@ -193,93 +196,102 @@ class NoSQLUtility extends Logging {
     required String name,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    Database? db = _noSQLManager.getNoSqlDatabase().databases[name];
+    return await opMapper(
+      func: () async {
+        Database? db = _noSQLManager.getNoSqlDatabase().databases[name];
 
-    String? successMessage, errorMessage;
+        String? successMessage, errorMessage;
 
-    try {
-      if (db == null) {
-        errorMessage =
-            "Failed to delete $name database, database does not exists";
+        try {
+          if (db == null) {
+            errorMessage =
+                "Failed to delete $name database, database does not exists";
 
-        log(errorMessage);
-        if (callback != null) callback(error: errorMessage);
+            log(errorMessage);
+            if (callback != null) callback(error: errorMessage);
 
-        return false;
-      }
-      bool results =
-          _noSQLManager.getNoSqlDatabase().removeDatabase(database: db);
+            return false;
+          }
+          bool results =
+              _noSQLManager.getNoSqlDatabase().removeDatabase(database: db);
 
-      if (results) {
-        successMessage = "$name database successfully deleted";
-        log(successMessage);
-        if (callback != null) callback(res: (results, successMessage));
-      } else {
-        errorMessage = "Failed to delete $name Database";
-        log(errorMessage);
-        if (callback != null) callback(error: errorMessage);
-      }
-    } catch (e) {
-      errorMessage = "Failed to delete $name database, error ocurred -> $e";
-      log(errorMessage);
-      if (callback != null) callback(error: errorMessage);
-      return false;
-    }
+          if (results) {
+            successMessage = "$name database successfully deleted";
+            log(successMessage);
+            if (callback != null) callback(res: (results, successMessage));
+          } else {
+            errorMessage = "Failed to delete $name Database";
+            log(errorMessage);
+            if (callback != null) callback(error: errorMessage);
+          }
+        } catch (e) {
+          errorMessage = "Failed to delete $name database, error ocurred -> $e";
+          log(errorMessage);
+          if (callback != null) callback(error: errorMessage);
+          return false;
+        }
 
-    return true;
+        return true;
+      },
+    );
   }
 
   Future<bool> createCollection({
     required String reference,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    Database? database;
-    String collectionName;
+    return await opMapper(
+      func: () async {
+        Database? database;
+        String collectionName;
 
-    if (reference.contains(".")) {
-      database = await getDatabase(reference: reference.split(".")[0]);
-      collectionName = reference.split(".")[1];
-    } else {
-      database = _noSQLManager.getNoSqlDatabase().currentDatabase;
-      collectionName = reference;
-    }
+        if (reference.contains(".")) {
+          database = await getDatabase(reference: reference.split(".")[0]);
+          collectionName = reference.split(".")[1];
+        } else {
+          database = _noSQLManager.getNoSqlDatabase().currentDatabase;
+          collectionName = reference;
+        }
 
-    String? successMessage, errorMessage;
+        String? successMessage, errorMessage;
 
-    if (database == null) {
-      errorMessage = "Database with the reference $reference not found";
-      log(errorMessage);
+        if (database == null) {
+          errorMessage = "Database with the reference $reference not found";
+          log(errorMessage);
 
-      if (callback != null) callback(error: errorMessage);
-      return false;
-    }
+          if (callback != null) callback(error: errorMessage);
+          return false;
+        }
 
-    if (collectionName.isEmpty) {
-      errorMessage = "Collection name in the $reference can not be empty";
-      log(errorMessage);
+        if (collectionName.isEmpty) {
+          errorMessage = "Collection name in the $reference can not be empty";
+          log(errorMessage);
 
-      if (callback != null) callback(error: errorMessage);
-      return false;
-    }
+          if (callback != null) callback(error: errorMessage);
+          return false;
+        }
 
-    var collection = Collection(
-      objectId: generateUUID(),
-      name: collectionName,
+        var collection = Collection(
+          objectId: generateUUID(),
+          name: collectionName,
+        );
+
+        bool results = database.addCollection(collection: collection);
+
+        if (results) {
+          successMessage = "Collection with the reference $reference added";
+          log(successMessage);
+          if (callback != null) callback(res: (results, successMessage));
+        } else {
+          errorMessage =
+              "Failed to add Collection with the reference $reference";
+          log(errorMessage);
+          if (callback != null) callback(error: errorMessage);
+        }
+
+        return results;
+      },
     );
-
-    bool results = database.addCollection(collection: collection);
-
-    if (results) {
-      successMessage = "Collection with the reference $reference added";
-      log(successMessage);
-      if (callback != null) callback(res: (results, successMessage));
-    } else {
-      errorMessage = "Failed to add Collection with the reference $reference";
-      log(errorMessage);
-      if (callback != null) callback(error: errorMessage);
-    }
-
-    return results;
   }
 
   Future<Collection?> getCollection({
@@ -359,39 +371,43 @@ class NoSQLUtility extends Logging {
     required String reference,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    Database? database = await getDatabase(reference: reference);
+    return await opMapper(
+      func: () async {
+        Database? database = await getDatabase(reference: reference);
 
-    String? successMessage, errorMessage;
+        String? successMessage, errorMessage;
 
-    if (database == null) {
-      errorMessage = "Database with the reference $reference not found";
-      log(errorMessage);
-      if (callback != null) callback(error: errorMessage);
-      return false;
-    }
+        if (database == null) {
+          errorMessage = "Database with the reference $reference not found";
+          log(errorMessage);
+          if (callback != null) callback(error: errorMessage);
+          return false;
+        }
 
-    Collection? collection = await getCollection(reference: reference);
+        Collection? collection = await getCollection(reference: reference);
 
-    if (collection == null) {
-      errorMessage = "Collection with the reference $reference not found";
-      if (callback != null) callback(error: errorMessage);
-      return false;
-    }
+        if (collection == null) {
+          errorMessage = "Collection with the reference $reference not found";
+          if (callback != null) callback(error: errorMessage);
+          return false;
+        }
 
-    bool results = database.removeCollection(collection: collection);
+        bool results = database.removeCollection(collection: collection);
 
-    if (results) {
-      successMessage = "Collection with the reference $reference deleted";
-      log(successMessage);
-      if (callback != null) callback(res: (results, successMessage));
-    } else {
-      errorMessage =
-          "Failed to delete Collection with the reference $reference";
-      log(errorMessage);
-      if (callback != null) callback(error: errorMessage);
-    }
+        if (results) {
+          successMessage = "Collection with the reference $reference deleted";
+          log(successMessage);
+          if (callback != null) callback(res: (results, successMessage));
+        } else {
+          errorMessage =
+              "Failed to delete Collection with the reference $reference";
+          log(errorMessage);
+          if (callback != null) callback(error: errorMessage);
+        }
 
-    return results;
+        return results;
+      },
+    );
   }
 
   Future<bool> insertDocument({
@@ -399,26 +415,30 @@ class NoSQLUtility extends Logging {
     required Map<String, dynamic> data,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    Collection? collection = await getCollection(
-      reference: reference,
-      callback: (errorMsg) {
-        if (callback != null) callback(error: errorMsg);
+    return await opMapper(
+      func: () async {
+        Collection? collection = await getCollection(
+          reference: reference,
+          callback: (errorMsg) {
+            if (callback != null) callback(error: errorMsg);
+          },
+        );
+
+        if (collection == null) return false;
+
+        Document document = Document(
+          objectId: generateUUID(),
+          timestamp: DateTime.now(),
+        );
+        document.addField(field: data);
+
+        bool results = collection.addDocument(document: document);
+
+        // if (callback != null) callback(res: (results,""));
+
+        return results;
       },
     );
-
-    if (collection == null) return false;
-
-    Document document = Document(
-      objectId: generateUUID(),
-      timestamp: DateTime.now(),
-    );
-    document.addField(field: data);
-
-    bool results = collection.addDocument(document: document);
-
-    // if (callback != null) callback(res: (results,""));
-
-    return results;
   }
 
   Future<bool> insertDocuments({
@@ -426,47 +446,52 @@ class NoSQLUtility extends Logging {
     required List<Map<String, dynamic>> data,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    Collection? collection = await getCollection(
-      reference: reference,
-      callback: (errorMsg) {
-        if (callback != null) callback(error: errorMsg);
+    return await opMapper(
+      func: () async {
+        Collection? collection = await getCollection(
+          reference: reference,
+          callback: (errorMsg) {
+            if (callback != null) callback(error: errorMsg);
+          },
+        );
+
+        if (collection == null) return false;
+
+        bool results = true;
+
+        List<Document> failedDocuments = [];
+
+        for (var field in data) {
+          bool docRes = true;
+          Document document = Document(
+            objectId: generateUUID(),
+            timestamp: DateTime.now(),
+          );
+          document.addField(field: field);
+
+          docRes = collection.addDocument(document: document);
+
+          if (!docRes) {
+            failedDocuments.add(document);
+            results = false;
+          }
+        }
+
+        if (!results) {
+          String errorMessage =
+              "failed to insert documents: ${failedDocuments.map(
+            (document) => document.toJson(
+              serialize: true,
+            ),
+          )}";
+          log(errorMessage);
+
+          if (callback != null) callback(error: errorMessage);
+        }
+
+        return results;
       },
     );
-
-    if (collection == null) return false;
-
-    bool results = true;
-
-    List<Document> failedDocuments = [];
-
-    for (var field in data) {
-      bool docRes = true;
-      Document document = Document(
-        objectId: generateUUID(),
-        timestamp: DateTime.now(),
-      );
-      document.addField(field: field);
-
-      docRes = collection.addDocument(document: document);
-
-      if (!docRes) {
-        failedDocuments.add(document);
-        results = false;
-      }
-    }
-
-    if (!results) {
-      String errorMessage = "failed to insert documents: ${failedDocuments.map(
-        (document) => document.toJson(
-          serialize: true,
-        ),
-      )}";
-      log(errorMessage);
-
-      if (callback != null) callback(error: errorMessage);
-    }
-
-    return results;
   }
 
   Future<List<Document>> getDocuments({
@@ -511,39 +536,45 @@ class NoSQLUtility extends Logging {
     required Map<String, dynamic> data,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    Collection? collection = await getCollection(
-      reference: reference,
-      callback: (errorMsg) {
-        if (callback != null) callback(error: errorMsg);
+    return await opMapper(
+      func: () async {
+        Collection? collection = await getCollection(
+          reference: reference,
+          callback: (errorMsg) {
+            if (callback != null) callback(error: errorMsg);
+          },
+        );
+
+        if (collection == null) return false;
+
+        Document? document =
+            collection.documents.values.where(query).firstOrNull;
+
+        if (document == null) {
+          if (callback != null) {
+            callback(error: "Document not found");
+          }
+          return false;
+        }
+
+        bool results =
+            collection.updateDocument(document: document, data: data);
+
+        if (results) {
+          if (callback != null) {
+            callback(res: (true, "Document updated"));
+          }
+        } else {
+          if (callback != null) {
+            callback(
+              error: "Failed to update document $document",
+            );
+          }
+        }
+
+        return results;
       },
     );
-
-    if (collection == null) return false;
-
-    Document? document = collection.documents.values.where(query).firstOrNull;
-
-    if (document == null) {
-      if (callback != null) {
-        callback(error: "Document not found");
-      }
-      return false;
-    }
-
-    bool results = collection.updateDocument(document: document, data: data);
-
-    if (results) {
-      if (callback != null) {
-        callback(res: (true, "Document updated"));
-      }
-    } else {
-      if (callback != null) {
-        callback(
-          error: "Failed to update document $document",
-        );
-      }
-    }
-
-    return results;
   }
 
   Future<bool> removeDocument({
@@ -551,39 +582,44 @@ class NoSQLUtility extends Logging {
     required bool Function(Document document) query,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    Collection? collection = await getCollection(
-      reference: reference,
-      callback: (errorMsg) {
-        if (callback != null) callback(error: errorMsg);
+    return await opMapper(
+      func: () async {
+        Collection? collection = await getCollection(
+          reference: reference,
+          callback: (errorMsg) {
+            if (callback != null) callback(error: errorMsg);
+          },
+        );
+
+        if (collection == null) return false;
+
+        Document? document =
+            collection.documents.values.where(query).firstOrNull;
+
+        if (document == null) {
+          if (callback != null) {
+            callback(error: "Document not found");
+          }
+          return false;
+        }
+
+        bool results = collection.removeDocument(document: document);
+
+        if (results) {
+          if (callback != null) {
+            callback(res: (true, "Document deleted"));
+          }
+        } else {
+          if (callback != null) {
+            callback(
+              error: "Failed to delete document $document",
+            );
+          }
+        }
+
+        return true;
       },
     );
-
-    if (collection == null) return false;
-
-    Document? document = collection.documents.values.where(query).firstOrNull;
-
-    if (document == null) {
-      if (callback != null) {
-        callback(error: "Document not found");
-      }
-      return false;
-    }
-
-    bool results = collection.removeDocument(document: document);
-
-    if (results) {
-      if (callback != null) {
-        callback(res: (true, "Document deleted"));
-      }
-    } else {
-      if (callback != null) {
-        callback(
-          error: "Failed to delete document $document",
-        );
-      }
-    }
-
-    return true;
   }
 
   Future<bool> removeDocuments({
@@ -591,41 +627,46 @@ class NoSQLUtility extends Logging {
     required bool Function(Document document) query,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    Collection? collection = await getCollection(
-      reference: reference,
-      callback: (errorMsg) {
-        if (callback != null) callback(error: errorMsg);
+    return await opMapper(
+      func: () async {
+        Collection? collection = await getCollection(
+          reference: reference,
+          callback: (errorMsg) {
+            if (callback != null) callback(error: errorMsg);
+          },
+        );
+
+        if (collection == null) return false;
+
+        var documents = collection.documents.values.where(query).toList();
+
+        bool results = true;
+
+        List<Document> failedDocuments = [];
+
+        for (var document in documents) {
+          bool docRes = collection.removeDocument(document: document);
+
+          if (!docRes) {
+            failedDocuments.add(document);
+            results = false;
+          }
+        }
+
+        if (!results) {
+          String errorMessage =
+              "Failed to delete documents: ${failedDocuments.map(
+            (document) => document.toJson(
+              serialize: true,
+            ),
+          )}";
+          log(errorMessage);
+
+          if (callback != null) callback(error: errorMessage);
+        }
+
+        return results;
       },
     );
-
-    if (collection == null) return false;
-
-    var documents = collection.documents.values.where(query).toList();
-
-    bool results = true;
-
-    List<Document> failedDocuments = [];
-
-    for (var document in documents) {
-      bool docRes = collection.removeDocument(document: document);
-
-      if (!docRes) {
-        failedDocuments.add(document);
-        results = false;
-      }
-    }
-
-    if (!results) {
-      String errorMessage = "Failed to delete documents: ${failedDocuments.map(
-        (document) => document.toJson(
-          serialize: true,
-        ),
-      )}";
-      log(errorMessage);
-
-      if (callback != null) callback(error: errorMessage);
-    }
-
-    return results;
   }
 }
