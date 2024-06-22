@@ -62,10 +62,11 @@ class NoSQLTransactionalManager extends Logging {
     return await func();
   }
 
-  Future<NoSQLDatabase> commit(NoSQLDatabase noSQLDatabase) async {
+  Future<void> commit(NoSQLDatabase noSQLDatabase) async {
+    if (_noSqlManager.noSQLDatabase == noSQLDatabase) {
+      return;
+    }
     _noSqlManager.noSQLDatabase = noSQLDatabase;
-
-    return noSQLDatabase;
   }
 }
 

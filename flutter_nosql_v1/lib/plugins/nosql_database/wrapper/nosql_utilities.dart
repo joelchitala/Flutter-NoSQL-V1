@@ -2,12 +2,14 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_comp
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/database.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/document.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/nosql_manager.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/proxies/nosql_document_proxy.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_transactional/nosql_transactional_manager.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/fileoperations.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/utils.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/logger.dart';
 
-class NoSQLUtility extends Logging with NoSQLTransactionalManagerWrapper {
+class NoSQLUtility extends Logging
+    with NoSQLTransactionalManagerWrapper, NoSqlDocumentProxy {
   final NoSQLManager _noSQLManager = NoSQLManager();
 
   NoSQLUtility();
@@ -426,15 +428,11 @@ class NoSQLUtility extends Logging with NoSQLTransactionalManagerWrapper {
 
         if (collection == null) return false;
 
-        Document document = Document(
-          objectId: generateUUID(),
-          timestamp: DateTime.now(),
+        bool results = insertDocumentProxy(
+          collection: collection,
+          data: data,
+          callback: callback,
         );
-        document.addField(field: data);
-
-        bool results = collection.addDocument(document: document);
-
-        // if (callback != null) callback(res: (results,""));
 
         return results;
       },
@@ -461,21 +459,11 @@ class NoSQLUtility extends Logging with NoSQLTransactionalManagerWrapper {
 
         List<Document> failedDocuments = [];
 
-        for (var field in data) {
-          bool docRes = true;
-          Document document = Document(
-            objectId: generateUUID(),
-            timestamp: DateTime.now(),
-          );
-          document.addField(field: field);
-
-          docRes = collection.addDocument(document: document);
-
-          if (!docRes) {
-            failedDocuments.add(document);
-            results = false;
-          }
-        }
+        results = insertDocumentsProxy(
+          collection: collection,
+          data: data,
+          callback: callback,
+        );
 
         if (!results) {
           String errorMessage =
@@ -547,31 +535,40 @@ class NoSQLUtility extends Logging with NoSQLTransactionalManagerWrapper {
 
         if (collection == null) return false;
 
-        Document? document =
-            collection.documents.values.where(query).firstOrNull;
+        bool results = updateDocumentProxy(
+          collection: collection,
+          query: query,
+          data: data,
+          callback: callback,
+        );
+        return results;
+      },
+    );
+  }
 
-        if (document == null) {
-          if (callback != null) {
-            callback(error: "Document not found");
-          }
-          return false;
-        }
+  Future<bool> updateDocuments({
+    required String reference,
+    required bool Function(Document document) query,
+    required Map<String, dynamic> data,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) async {
+    return await opMapper(
+      func: () async {
+        Collection? collection = await getCollection(
+          reference: reference,
+          callback: (errorMsg) {
+            if (callback != null) callback(error: errorMsg);
+          },
+        );
 
-        bool results =
-            collection.updateDocument(document: document, data: data);
+        if (collection == null) return false;
 
-        if (results) {
-          if (callback != null) {
-            callback(res: (true, "Document updated"));
-          }
-        } else {
-          if (callback != null) {
-            callback(
-              error: "Failed to update document $document",
-            );
-          }
-        }
-
+        bool results = updateDocumentsProxy(
+          collection: collection,
+          query: query,
+          data: data,
+          callback: callback,
+        );
         return results;
       },
     );

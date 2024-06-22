@@ -67,9 +67,8 @@ class NoSQLTransactional {
   Future<void> commit({
     Function(String? error)? callback,
   }) async {
-    print("Execution Results $_executionResults");
     if (noSQLDatabase != null && _executionResults) {
-      _transactionalManager.commit(_noSQLDatabase!);
+      await _transactionalManager.commit(_noSQLDatabase!);
     }
   }
 }

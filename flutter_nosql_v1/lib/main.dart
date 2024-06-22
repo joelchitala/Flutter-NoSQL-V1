@@ -3,7 +3,6 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/core/nosql_manager.dart'
 import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_transactional/nosql_transactional.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/nosql_stateful_wrapper.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/nosql_utilities.dart';
-import 'package:flutter_nosql_v1/ui/screens/nosql_database_screen.dart';
 
 Future<void> initDB(NoSQlInitilizationObject initilizationObject) async {
   NoSQLUtility noSQLUtility = NoSQLUtility();
@@ -50,11 +49,15 @@ class MainApp extends StatelessWidget {
 
                     NoSQLTransactional transactional = NoSQLTransactional(
                       executeFunction: () async {
-                        await noSQLUtility.createDatabase(name: "middlesex");
+                        await noSQLUtility.createCollection(
+                          reference: "myriad.students",
+                        );
                       },
                     );
 
                     await transactional.execute();
+
+                    // await noSQLUtility.createDatabase(name: "myriad");
                   },
                 );
 
@@ -69,7 +72,13 @@ class MainApp extends StatelessWidget {
                 print("commit");
                 print(manager.noSQLDatabase.toJson(serialize: true));
               },
-              child: Text("Transactional"),
+              child: Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: const BoxDecoration(
+                  color: Colors.black12,
+                ),
+                child: const Text("Transactional"),
+              ),
             ),
           ),
           // body: const NoSQLDatabaseScreen(),
