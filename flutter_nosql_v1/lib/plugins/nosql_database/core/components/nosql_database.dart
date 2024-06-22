@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/database.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/nosql_meta_manager.dart';
 
 class NoSQLDatabase {
   final double _version = 1.0;
+  NoSqlMetaManager metaManger = NoSqlMetaManager();
+
   DateTime _timestamp = DateTime.now();
 
   final _streamController = StreamController<List<Database>>.broadcast();
@@ -140,6 +143,11 @@ class NoSQLDatabase {
       "inMemoryOnlyMode": inMemoryOnlyMode,
       "databases":
           serialize ? databaseEntries : Map<String, Database>.from(databases),
+      "metaManger": serialize
+          ? metaManger.toJson(
+              serialize: serialize,
+            )
+          : metaManger,
     };
   }
 }

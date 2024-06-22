@@ -1,14 +1,12 @@
-import 'dart:async';
-
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/base_component.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/entity_types.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/document.dart';
 
-class Collection extends BaseComponent {
-  final _streamController = StreamController<List<Document>>.broadcast();
+class Collection extends BaseComponent<Collection, Document> {
+  // final _streamController = StreamController<List<Document>>.broadcast();
   String name;
   EntityType type = EntityType.collection;
-  Map<String, Document> documents = {};
+  // Map<String, Document> objects = {};
 
   Collection({
     required super.objectId,
@@ -17,9 +15,9 @@ class Collection extends BaseComponent {
   });
 
   factory Collection.fromJson({required Map<String, dynamic> data}) {
-    Map<String, Document> documents = {};
+    Map<String, Document> objects = {};
 
-    Map<String, dynamic>? jsonDocuments = data["documents"];
+    Map<String, dynamic>? jsonDocuments = data["objects"];
 
     if (jsonDocuments != null) {
       try {
@@ -37,7 +35,7 @@ class Collection extends BaseComponent {
 
           if (tempEntries.isEmpty) continue;
 
-          documents.addAll(
+          objects.addAll(
             {
               key: Document.fromJson(data: tempEntries),
             },
@@ -54,41 +52,41 @@ class Collection extends BaseComponent {
       timestamp: DateTime.tryParse("${data["timestamp"]}"),
     );
 
-    collection.documents = documents;
+    collection.objects = objects;
 
     return collection;
   }
 
-  Stream<List<Document>> stream({bool Function(Document document)? query}) {
-    if (query != null) {
-      return _streamController.stream.map((documents) {
-        return documents.where(query).toList();
-      });
-    }
+  // Stream<List<Document>> stream({bool Function(Document document)? query}) {
+  //   if (query != null) {
+  //     return _streamController.stream.map((objects) {
+  //       return objects.where(query).toList();
+  //     });
+  //   }
 
-    return _streamController.stream;
-  }
+  //   return _streamController.stream;
+  // }
 
-  void _broadcastChanges() {
-    _streamController.add(List<Document>.from(documents.values.toList()));
-  }
+  // void _broadcastChanges() {
+  //   _streamController.add(List<Document>.from(objects.values.toList()));
+  // }
 
-  void dispose() {
-    _streamController.close();
-  }
+  // void dispose() {
+  //   _streamController.close();
+  // }
 
   bool addDocument({
     required Document document,
   }) {
     bool results = true;
 
-    if (documents.containsKey(document.objectId)) {
+    if (objects.containsKey(document.objectId)) {
       return false;
     }
 
-    documents.addAll({document.objectId: document});
+    objects.addAll({document.objectId: document});
 
-    _broadcastChanges();
+    broadcastObjectsChanges();
     return results;
   }
 
@@ -98,7 +96,7 @@ class Collection extends BaseComponent {
   }) {
     bool results = true;
 
-    var object = documents[document.objectId];
+    var object = objects[document.objectId];
 
     if (object == null) {
       return false;
@@ -106,7 +104,7 @@ class Collection extends BaseComponent {
 
     object.update(data: data);
 
-    _broadcastChanges();
+    broadcastObjectsChanges();
 
     return results;
   }
@@ -116,13 +114,13 @@ class Collection extends BaseComponent {
   }) {
     bool results = true;
 
-    var object = documents.remove(document.objectId);
+    var object = objects.remove(document.objectId);
 
     if (object == null) {
       return false;
     }
 
-    _broadcastChanges();
+    broadcastObjectsChanges();
 
     return results;
   }
@@ -136,7 +134,7 @@ class Collection extends BaseComponent {
   Map<String, dynamic> toJson({required bool serialize}) {
     Map<String, Map> documentEntries = {};
 
-    documents.forEach(
+    objects.forEach(
       (key, value) {
         documentEntries.addAll(
           {
@@ -151,7 +149,7 @@ class Collection extends BaseComponent {
         {
           "name": name,
           "type": serialize ? type.toString() : type,
-          "documents": serialize ? documentEntries : documents,
+          "objects": serialize ? documentEntries : objects,
         },
       );
   }

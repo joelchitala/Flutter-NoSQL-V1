@@ -7,20 +7,18 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/utils.dart';
 mixin NoSqlDocumentProxy {
   final NoSqlMetaManager _metaManager = NoSqlMetaManager();
 
-  List<RestrictionFieldObject> getFieldObjectsByCollection({
+  RestrictionBuilder? getFieldObjectsByCollection({
     required Collection collection,
   }) {
-    return _metaManager.metaObject.getFieldObjects(
-      query: (object) {
-        return object.collectionId == collection.objectId;
-      },
+    return _metaManager.metaRestrictionObject.getRestrictionBuilder(
+      objectId: collection.objectId,
     );
   }
 
   List<Map<String, dynamic>> generateDocumentList({
     required Collection collection,
   }) {
-    return collection.documents.values
+    return collection.objects.values
         .map(
           (e) => e.toJson(
             serialize: false,
@@ -29,7 +27,7 @@ mixin NoSqlDocumentProxy {
         .toList();
   }
 
-  bool validate({
+  bool fieldValidator({
     required Map<String, dynamic> data,
     required List<RestrictionFieldObject> objects,
     List<Map<String, dynamic>> dataList = const [],
@@ -53,6 +51,28 @@ mixin NoSqlDocumentProxy {
     return results;
   }
 
+  bool valueValidator({
+    required Map<String, dynamic> data,
+    required List<RestrictionValueObject> objects,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) {
+    bool results = true;
+
+    for (var object in objects) {
+      results = object.validate(
+        json: data,
+        callback: (error) {
+          if (callback != null) callback(error: error);
+        },
+      );
+      if (!results) {
+        return false;
+      }
+    }
+
+    return results;
+  }
+
   bool insertDocumentProxy({
     required Collection collection,
     required Map<String, dynamic> data,
@@ -60,14 +80,20 @@ mixin NoSqlDocumentProxy {
   }) {
     bool results = true;
 
-    var objects = getFieldObjectsByCollection(collection: collection);
+    var builder = getFieldObjectsByCollection(collection: collection);
 
     var dataList = generateDocumentList(collection: collection);
 
-    results = validate(
+    results = fieldValidator(
       data: data,
-      objects: objects,
+      objects: builder?.fieldObjects ?? [],
       dataList: dataList,
+      callback: callback,
+    );
+
+    results = valueValidator(
+      data: data,
+      objects: builder?.valueObjects ?? [],
       callback: callback,
     );
 
@@ -91,15 +117,21 @@ mixin NoSqlDocumentProxy {
   }) {
     bool results = true;
 
-    var objects = getFieldObjectsByCollection(collection: collection);
+    var builder = getFieldObjectsByCollection(collection: collection);
 
     var dataList = generateDocumentList(collection: collection);
 
     for (var field in data) {
-      results = validate(
+      results = fieldValidator(
         data: field,
-        objects: objects,
+        objects: builder?.fieldObjects ?? [],
         dataList: dataList,
+        callback: callback,
+      );
+
+      results = valueValidator(
+        data: field,
+        objects: builder?.valueObjects ?? [],
         callback: callback,
       );
 
@@ -124,7 +156,7 @@ mixin NoSqlDocumentProxy {
     required Map<String, dynamic> data,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) {
-    Document? document = collection.documents.values.where(query).firstOrNull;
+    Document? document = collection.objects.values.where(query).firstOrNull;
 
     if (document == null) {
       if (callback != null) {
@@ -133,16 +165,22 @@ mixin NoSqlDocumentProxy {
       return false;
     }
 
-    var objects = getFieldObjectsByCollection(collection: collection);
+    var builder = getFieldObjectsByCollection(collection: collection);
 
     var dataList = generateDocumentList(collection: collection);
 
     bool results = true;
 
-    results = validate(
+    results = fieldValidator(
       data: data,
-      objects: objects,
+      objects: builder?.fieldObjects ?? [],
       dataList: dataList,
+      callback: callback,
+    );
+
+    results = valueValidator(
+      data: data,
+      objects: builder?.valueObjects ?? [],
       callback: callback,
     );
 
@@ -174,13 +212,13 @@ mixin NoSqlDocumentProxy {
     required Map<String, dynamic> data,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) {
-    List<Document> documents = collection.documents.values
+    List<Document> documents = collection.objects.values
         .where(
           query,
         )
         .toList();
 
-    var objects = getFieldObjectsByCollection(collection: collection);
+    var builder = getFieldObjectsByCollection(collection: collection);
 
     var dataList = generateDocumentList(collection: collection);
 
@@ -189,22 +227,40 @@ mixin NoSqlDocumentProxy {
     var updatedDocuments = [];
     var failedDocuments = [];
 
+    results = fieldValidator(
+      data: data,
+      objects: builder?.fieldObjects ?? [],
+      dataList: dataList,
+      callback: callback,
+    );
+
+    if (!results) {
+      return false;
+    }
+
+    results = valueValidator(
+      data: data,
+      objects: builder?.valueObjects ?? [],
+      callback: callback,
+    );
+
+    if (!results) {
+      return false;
+    }
+
     for (var document in documents) {
-      results = validate(
-        data: data,
-        objects: objects,
-        dataList: dataList,
-      );
-
-      if (!results) {
-        failedDocuments.add(document);
-        break;
-      }
-
-      results = collection.updateDocument(
+      bool res = collection.updateDocument(
         document: document,
         data: data,
       );
+
+      if (!res) {
+        failedDocuments.add(document);
+
+        results = false;
+        break;
+      }
+
       updatedDocuments.add(document);
     }
 

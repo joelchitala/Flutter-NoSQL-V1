@@ -86,7 +86,7 @@ class Document extends BaseComponent {
 
   @override
   void update({required Map<String, dynamic> data}) {
-    fields.addAll(data);
+    fields = data;
   }
 
   @override

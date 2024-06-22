@@ -47,6 +47,7 @@ class _NoSQLStatefulWrapperState extends State<NoSQLStatefulWrapper>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
+
     if (widget.commitStates.contains(state)) {
       noSQLUtility.commitToDisk(
         databasePath: initilizationObject.databasePath,

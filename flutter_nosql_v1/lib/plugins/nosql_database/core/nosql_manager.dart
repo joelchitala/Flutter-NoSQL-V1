@@ -5,7 +5,6 @@ class NoSQLManager {
   final double _version = 1.0;
 
   NoSQLDatabase noSQLDatabase = NoSQLDatabase();
-  String path = "database.json";
 
   NoSQLManager._();
   static final _instance = NoSQLManager._();
@@ -33,6 +32,27 @@ class NoSQLManager {
 
   void setNoSqlDatabase(NoSQLDatabase db) {
     noSQLDatabase = db;
+  }
+
+  Future<bool> opMapper({required Future<bool> Function() func}) async {
+    final NoSQLTransactionalManager transactionalManager =
+        NoSQLTransactionalManager();
+
+    var transactional = transactionalManager.currentTransactional;
+
+    if (transactional != null) {
+      if (!transactional.getExecutionResults()) {
+        return false;
+      }
+
+      bool results = await func();
+
+      await transactional.setExecutionResults(results);
+
+      return results;
+    }
+
+    return await func();
   }
 
   Map<String, dynamic> toJson({

@@ -2,17 +2,22 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_comp
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/database.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/document.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/nosql_manager.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/components/restriction_object.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/proxies/nosql_document_proxy.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_transactional/nosql_transactional_manager.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_transactional/nosql_transactional.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/fileoperations.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/utils.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/logger.dart';
 
-class NoSQLUtility extends Logging
-    with NoSQLTransactionalManagerWrapper, NoSqlDocumentProxy {
+class NoSQLUtility extends Logging with NoSqlDocumentProxy {
   final NoSQLManager _noSQLManager = NoSQLManager();
 
-  NoSQLUtility();
+  late final Future<bool> Function({required Future<bool> Function() func})
+      opMapper;
+
+  NoSQLUtility() {
+    opMapper = _noSQLManager.opMapper;
+  }
 
   Future<bool> clean({
     String databasePath = "database.json",
@@ -119,6 +124,14 @@ class NoSQLUtility extends Logging
             await getDatabase(reference: name);
 
     return true;
+  }
+
+  NoSQLTransactional transactional(Future<void> Function() executeFunction) {
+    NoSQLTransactional sqlTransactional = NoSQLTransactional(
+      executeFunction: executeFunction,
+    );
+
+    return sqlTransactional;
   }
 
   Future<bool> createDatabase({
@@ -234,6 +247,66 @@ class NoSQLUtility extends Logging
         }
 
         return true;
+      },
+    );
+  }
+
+  Future<bool> setRestrictions({
+    required String reference,
+    required RestrictionBuilder builder,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) async {
+    return await opMapper(
+      func: () async {
+        Collection? collection = await getCollection(
+          reference: reference,
+          callback: (errorMsg) {
+            if (callback != null) callback(error: errorMsg);
+          },
+        );
+
+        if (collection == null) return false;
+
+        var metaManger = _noSQLManager.getNoSqlDatabase().metaManger;
+
+        bool results = metaManger.metaRestrictionObject.addRestriction(
+          objectId: collection.objectId,
+          restrictionBuilder: builder,
+          callback: callback,
+        );
+
+        return results;
+      },
+    );
+  }
+
+  Future<bool> removeRestrictions({
+    required String reference,
+    List<String> fieldObjectKeys = const [],
+    List<String> valueObjectKeys = const [],
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) async {
+    return await opMapper(
+      func: () async {
+        Collection? collection = await getCollection(
+          reference: reference,
+          callback: (errorMsg) {
+            if (callback != null) callback(error: errorMsg);
+          },
+        );
+
+        if (collection == null) return false;
+
+        var metaManger = _noSQLManager.getNoSqlDatabase().metaManger;
+
+        bool results = metaManger.metaRestrictionObject.removeRestriction(
+          objectId: collection.objectId,
+          fieldObjectKeys: fieldObjectKeys,
+          valueObjectKeys: valueObjectKeys,
+          callback: callback,
+        );
+
+        return results;
       },
     );
   }
@@ -497,8 +570,8 @@ class NoSQLUtility extends Logging
     if (collection == null) return [];
 
     return query == null
-        ? collection.documents.values.toList()
-        : collection.documents.values.where(query).toList();
+        ? collection.objects.values.toList()
+        : collection.objects.values.where(query).toList();
   }
 
   Stream<List<Document>> getDocumentStream({
@@ -590,8 +663,7 @@ class NoSQLUtility extends Logging
 
         if (collection == null) return false;
 
-        Document? document =
-            collection.documents.values.where(query).firstOrNull;
+        Document? document = collection.objects.values.where(query).firstOrNull;
 
         if (document == null) {
           if (callback != null) {
@@ -635,7 +707,7 @@ class NoSQLUtility extends Logging
 
         if (collection == null) return false;
 
-        var documents = collection.documents.values.where(query).toList();
+        var documents = collection.objects.values.where(query).toList();
 
         bool results = true;
 

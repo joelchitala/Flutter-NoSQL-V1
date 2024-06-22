@@ -1,11 +1,21 @@
 import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/nosql_meta_object.dart';
 
 class NoSqlMetaManager {
-  final NoSqlMetaObject _metaObject = NoSqlMetaObject();
+  final NoSqlMetaRestrictionObject _metaRestrictionObject =
+      NoSqlMetaRestrictionObject();
 
-  NoSqlMetaManager._();
-  static final _intance = NoSqlMetaManager._();
-  factory NoSqlMetaManager() => _intance;
+  NoSqlMetaRestrictionObject get metaRestrictionObject =>
+      _metaRestrictionObject;
 
-  NoSqlMetaObject get metaObject => _metaObject;
+  Map<String, dynamic> toJson({
+    required bool serialize,
+  }) {
+    return {
+      "_metaRestrictionObject": serialize
+          ? _metaRestrictionObject.toJson(
+              serialize: serialize,
+            )
+          : _metaRestrictionObject,
+    };
+  }
 }

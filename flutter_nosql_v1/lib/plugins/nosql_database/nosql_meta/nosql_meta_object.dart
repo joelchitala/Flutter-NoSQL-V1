@@ -1,72 +1,111 @@
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/collection.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/components/restriction_object.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_transactional/nosql_transactional_manager.dart';
 
-class NoSqlMetaObject with NoSQLTransactionalManagerWrapper {
-  final Map<String, RestrictionFieldObject> _fieldObjects = {};
+class NoSqlMetaRestrictionObject {
+  final Map<String, RestrictionBuilder> _collectionRestrictions = {};
 
-  void initFieldObject({
-    required Collection collection,
-  }) {
-    if (_fieldObjects[collection.objectId] == null) {}
+  NoSqlMetaRestrictionObject();
+
+  Map<String, RestrictionBuilder> get collectionRestrictions =>
+      _collectionRestrictions;
+
+  RestrictionBuilder? getRestrictionBuilder({required String objectId}) {
+    return _collectionRestrictions[objectId];
   }
 
-  RestrictionFieldObject? getFieldObject({
+  bool addRestriction({
     required String objectId,
+    required RestrictionBuilder restrictionBuilder,
+    void Function({String? error, (bool res, String msg)? res})? callback,
   }) {
-    return _fieldObjects[objectId];
+    bool results = true;
+
+    var ref = _collectionRestrictions[objectId];
+
+    if (ref == null) {
+      _collectionRestrictions.addAll({objectId: restrictionBuilder});
+
+      return false;
+    }
+
+    bool res = true;
+
+    for (var fieldObject in restrictionBuilder.fieldObjects) {
+      res = ref.addFieldObject(
+        object: fieldObject,
+        callback: callback,
+      );
+
+      if (!res) results = false;
+    }
+
+    for (var valueObject in restrictionBuilder.valueObjects) {
+      res = ref.addValueObject(
+        object: valueObject,
+        callback: callback,
+      );
+
+      if (!res) results = false;
+    }
+
+    return results;
   }
 
-  List<RestrictionFieldObject> getFieldObjects({
-    bool Function(RestrictionFieldObject object)? query,
+  bool removeRestriction({
+    required String objectId,
+    List<String> fieldObjectKeys = const [],
+    List<String> valueObjectKeys = const [],
+    void Function({String? error, (bool res, String msg)? res})? callback,
   }) {
-    var objects = _fieldObjects.values;
-    return query == null ? objects.toList() : objects.where(query).toList();
+    bool results = true;
+
+    var ref = _collectionRestrictions[objectId];
+
+    if (ref == null) {
+      return false;
+    }
+
+    bool res = true;
+
+    for (var key in fieldObjectKeys) {
+      res = ref.removeField(
+        key: key,
+        callback: callback,
+      );
+
+      if (!res) results = false;
+    }
+
+    for (var key in valueObjectKeys) {
+      res = ref.removeValue(
+        key: key,
+        callback: callback,
+      );
+      if (!res) results = false;
+    }
+
+    return results;
   }
 
-  Future<bool> addFieldObject({
-    required Collection collection,
-    required RestrictionFieldObject fieldObject,
-  }) async {
-    initFieldObject(collection: collection);
-    return opMapper(
-      func: () async {
-        bool results = true;
+  Map<String, dynamic> toJson({
+    required bool serialize,
+  }) {
+    Map<String, dynamic> collectionRestrictionsTempEntries = {};
 
-        if (getFieldObject(objectId: fieldObject.objectId) != null) {
-          return false;
-        }
+    for (var object in _collectionRestrictions.entries) {
+      var key = object.key;
+      var value = object.value;
 
-        _fieldObjects.addAll(
-          {
-            fieldObject.objectId: fieldObject,
-          },
-        );
+      collectionRestrictionsTempEntries.addAll(
+        {
+          key: value.toJson(serialize: serialize),
+        },
+      );
+    }
 
-        return results;
-      },
-    );
-  }
-
-  Future<bool> removeFieldObject({
-    required Collection collection,
-    required RestrictionFieldObject fieldObject,
-  }) async {
-    return opMapper(
-      func: () async {
-        bool results = true;
-        var object = getFieldObject(
-          objectId: fieldObject.objectId,
-        );
-
-        if (object == null) {
-          return false;
-        }
-
-        _fieldObjects.remove(fieldObject.objectId);
-
-        return results;
-      },
-    );
+    return {
+      "_collectionRestrictions": serialize
+          ? collectionRestrictionsTempEntries
+          : _collectionRestrictions,
+    };
   }
 }

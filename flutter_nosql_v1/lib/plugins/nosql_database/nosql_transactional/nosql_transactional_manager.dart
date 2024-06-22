@@ -46,35 +46,10 @@ class NoSQLTransactionalManager extends Logging {
     return 0;
   }
 
-  Future<bool> opMapper({required Future<bool> Function() func}) async {
-    if (_currentTransactional != null) {
-      if (!_currentTransactional!.getExecutionResults()) {
-        return false;
-      }
-
-      bool results = await func();
-
-      await _currentTransactional!.setExecutionResults(results);
-
-      return results;
-    }
-
-    return await func();
-  }
-
   Future<void> commit(NoSQLDatabase noSQLDatabase) async {
     if (_noSqlManager.noSQLDatabase == noSQLDatabase) {
       return;
     }
     _noSqlManager.noSQLDatabase = noSQLDatabase;
-  }
-}
-
-mixin NoSQLTransactionalManagerWrapper {
-  final NoSQLTransactionalManager _transactionalManager =
-      NoSQLTransactionalManager();
-
-  Future<bool> opMapper({required Future<bool> Function() func}) async {
-    return await _transactionalManager.opMapper(func: func);
   }
 }

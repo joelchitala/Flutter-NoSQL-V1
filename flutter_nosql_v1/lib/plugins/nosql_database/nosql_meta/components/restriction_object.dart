@@ -1,4 +1,6 @@
-String cleanRestrictionTypes({required String type}) {
+import 'dart:math';
+
+String _cleanRestrictionTypes({required String type}) {
   if (type.isEmpty) return type;
 
   if (type[0] != "_") return type;
@@ -15,7 +17,7 @@ String cleanRestrictionTypes({required String type}) {
   return str;
 }
 
-List<List<T>> arrayPairer<T>(List<T> values) {
+List<List<T>> _arrayPairer<T>(List<T> values) {
   List<List<T>> pairs = [];
   try {
     if (values.length % 2 != 0) {
@@ -32,6 +34,15 @@ List<List<T>> arrayPairer<T>(List<T> values) {
     }
   } catch (_) {}
   return pairs;
+}
+
+String _generateFullTimeStamp() {
+  DateTime now = DateTime.now();
+  return "${now.second}:${now.minute}:${now.hour}::${now.day}-${now.month}-${now.year}";
+}
+
+String _generateUUID({int max = 10000}) {
+  return "${Random().nextInt(max)}_${_generateFullTimeStamp()}";
 }
 
 enum RestrictionFieldTypes {
@@ -74,13 +85,11 @@ class RestrictionFieldObject {
   bool unique;
   bool isRequired, exclude;
   bool caseSensitive;
-  String collectionId;
 
   RestrictionFieldObject({
     required this.objectId,
     required this.key,
     required this.restrictionType,
-    required this.collectionId,
     this.unique = false,
     this.expectedType,
     this.isRequired = false,
@@ -95,7 +104,6 @@ class RestrictionFieldObject {
       key: data["key"],
       restrictionType: toRestrictionFieldTypes(data["restrictionType"]) ??
           RestrictionFieldTypes.fieldRestriction,
-      collectionId: data["collectionId"],
       unique: data["unique"],
       isRequired: data["isRequired"],
       exclude: data["exclude"],
@@ -112,9 +120,9 @@ class RestrictionFieldObject {
     var data = json[key];
 
     String runtimeType =
-        cleanRestrictionTypes(type: data.runtimeType.toString());
+        _cleanRestrictionTypes(type: data.runtimeType.toString());
     String expectedRuntimeType =
-        cleanRestrictionTypes(type: expectedType.toString());
+        _cleanRestrictionTypes(type: expectedType.toString());
 
     bool validRuntimeType() {
       return ((runtimeType == expectedRuntimeType) ||
@@ -165,7 +173,6 @@ class RestrictionFieldObject {
     return {
       "objectId": objectId,
       "key": key,
-      "collectionId": collectionId,
       "restrictionType": restrictionType.toString(),
       "expectedType": expectedType.toString(),
       "unique": unique,
@@ -177,23 +184,29 @@ class RestrictionFieldObject {
 }
 
 class RestrictionValueObject {
+  final String objectId;
   String key;
   RestrictionValueTypes restrictionType;
   List expectedValues;
   bool caseSensitive = false;
 
   RestrictionValueObject({
+    required this.objectId,
     required this.key,
     required this.restrictionType,
     required this.expectedValues,
     this.caseSensitive = false,
   });
 
-  factory RestrictionValueObject.fromJson(
-      {required Map<String, dynamic> data}) {
+  factory RestrictionValueObject.fromJson({
+    required Map<String, dynamic> data,
+  }) {
     return RestrictionValueObject(
+      objectId: data["objectId"],
       key: data["key"],
-      restrictionType: toRestrictionValueTypes(data["restrictionType"]) ??
+      restrictionType: toRestrictionValueTypes(
+            data["restrictionType"],
+          ) ??
           RestrictionValueTypes.valueRestrictionEQ,
       expectedValues: data["expectedValues"],
       caseSensitive: data["caseSensitive"],
@@ -202,6 +215,7 @@ class RestrictionValueObject {
 
   bool validate({
     required Map<String, dynamic> json,
+    Function(String? error)? callback,
   }) {
     var data = json[key];
 
@@ -253,7 +267,7 @@ class RestrictionValueObject {
         }
         return true;
       case RestrictionValueTypes.valueRestrictionRANGE:
-        var pairs = arrayPairer(cleanedList);
+        var pairs = _arrayPairer(cleanedList);
 
         for (var pair in pairs) {
           var expectedValue1 = pair[0];
@@ -264,7 +278,7 @@ class RestrictionValueObject {
 
         return false;
       case RestrictionValueTypes.valueRestrictionINVRANGE:
-        var pairs = arrayPairer(cleanedList);
+        var pairs = _arrayPairer(cleanedList);
 
         for (var pair in pairs) {
           var expectedValue1 = pair[0];
@@ -275,7 +289,7 @@ class RestrictionValueObject {
 
         return true;
       case RestrictionValueTypes.valueRestrictionEQRANGE:
-        var pairs = arrayPairer(cleanedList);
+        var pairs = _arrayPairer(cleanedList);
 
         for (var pair in pairs) {
           var expectedValue1 = pair[0];
@@ -286,7 +300,7 @@ class RestrictionValueObject {
 
         return false;
       case RestrictionValueTypes.valueRestrictionINVEQRANGE:
-        var pairs = arrayPairer(cleanedList);
+        var pairs = _arrayPairer(cleanedList);
 
         for (var pair in pairs) {
           var expectedValue1 = pair[0];
@@ -306,6 +320,7 @@ class RestrictionValueObject {
 
   Map<String, dynamic> toJson() {
     return {
+      "objectId": objectId,
       "key": key,
       "restrictionType": restrictionType.toString(),
       "expectedValues": expectedValues,
@@ -314,4 +329,197 @@ class RestrictionValueObject {
   }
 }
 
-class RestrictionObject {}
+class RestrictionBuilder {
+  final Map<String, RestrictionFieldObject> _fieldObjects = {};
+  final Map<String, RestrictionValueObject> _valueObjects = {};
+
+  RestrictionBuilder();
+
+  List<RestrictionFieldObject> get fieldObjects =>
+      _fieldObjects.values.toList();
+
+  List<RestrictionValueObject> get valueObjects =>
+      _valueObjects.values.toList();
+
+  bool addFieldObject({
+    required RestrictionFieldObject object,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) {
+    bool results = true;
+
+    if (_fieldObjects[object.key] != null) {
+      if (callback != null) {
+        callback(
+          error:
+              "Failed to add field restricton. Field restriction with the key ${object.key} already exists",
+        );
+      }
+      return false;
+    }
+
+    _fieldObjects[object.key] = object;
+
+    if (callback != null) {
+      callback(
+        res: (true, "Field restriction added"),
+      );
+    }
+
+    return results;
+  }
+
+  bool addValueObject({
+    required RestrictionValueObject object,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) {
+    bool results = true;
+
+    if (_valueObjects[object.key] != null) {
+      if (callback != null) {
+        callback(
+          error:
+              "Failed to add value restricton. Vield restriction with the key ${object.key} already exists",
+        );
+      }
+      return false;
+    }
+
+    _valueObjects[object.key] = object;
+
+    if (callback != null) {
+      callback(
+        res: (true, "Value restriction added"),
+      );
+    }
+
+    return results;
+  }
+
+  RestrictionFieldObject? getFieldObject(String key) {
+    return _fieldObjects.values.where((x) => x.key == key).firstOrNull;
+  }
+
+  RestrictionValueObject? getValueObject(String key) {
+    return _valueObjects.values.where((x) => x.key == key).firstOrNull;
+  }
+
+  RestrictionBuilder addField({
+    required String key,
+    bool unique = false,
+    Type expectedType = dynamic,
+    bool exclude = false,
+    bool caseSensitive = false,
+    RestrictionFieldTypes type = RestrictionFieldTypes.fieldRestriction,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) {
+    addFieldObject(
+      object: RestrictionFieldObject(
+        objectId: _generateUUID(),
+        key: key,
+        restrictionType: type,
+        unique: unique,
+        expectedType: expectedType.toString(),
+        exclude: exclude,
+        caseSensitive: caseSensitive,
+      ),
+      callback: callback,
+    );
+    return this;
+  }
+
+  bool removeField({
+    required String key,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) {
+    bool results = true;
+
+    if (_fieldObjects.remove(key) == null) {
+      if (callback != null) {
+        callback(
+          error:
+              "Failed to remove field restricton. Field restriction with the key $key not found",
+        );
+      }
+      return false;
+    }
+
+    if (callback != null) {
+      callback(
+        res: (true, "Field restriction removed"),
+      );
+    }
+
+    return results;
+  }
+
+  RestrictionBuilder addValue({
+    required String key,
+    required List expectedValues,
+    bool caseSensitive = false,
+    RestrictionValueTypes type = RestrictionValueTypes.valueRestrictionEQ,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) {
+    addValueObject(
+      object: RestrictionValueObject(
+        objectId: _generateUUID(),
+        key: key,
+        restrictionType: type,
+        expectedValues: expectedValues,
+        caseSensitive: caseSensitive,
+      ),
+      callback: callback,
+    );
+    return this;
+  }
+
+  bool removeValue({
+    required String key,
+    void Function({String? error, (bool res, String msg)? res})? callback,
+  }) {
+    bool results = true;
+    if (_valueObjects.remove(key) == null) {
+      if (callback != null) {
+        callback(
+          error:
+              "Failed to remove value restricton. Value restriction with the key $key not found",
+        );
+      }
+      return false;
+    }
+
+    if (callback != null) {
+      callback(
+        res: (true, "Value restriction removed"),
+      );
+    }
+
+    return results;
+  }
+
+  Map<String, dynamic> toJson({
+    required bool serialize,
+  }) {
+    Map<String, dynamic> fieldObjectsJson = {};
+
+    for (var object in _fieldObjects.entries) {
+      var key = object.key;
+      var value = object.value;
+
+      fieldObjectsJson.addAll({key: value.toJson()});
+    }
+
+    Map<String, dynamic> valueObjectsJson = {};
+
+    for (var object in _valueObjects.entries) {
+      var key = object.key;
+      var value = object.value;
+
+      valueObjectsJson.addAll({key: value.toJson()});
+    }
+
+    return {
+      "_fieldObjects": serialize ? fieldObjectsJson : _fieldObjects,
+      "_valueObjects": serialize ? valueObjectsJson : _valueObjects,
+    };
+  }
+}

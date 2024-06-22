@@ -1,13 +1,11 @@
-import 'dart:async';
-
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/base_component.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/entity_types.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/collection.dart';
 
-class Database extends BaseComponent {
+class Database extends BaseComponent<Database, Collection> {
   String name;
   EntityType type = EntityType.database;
-  final _streamController = StreamController<List<Collection>>.broadcast();
+  // final _streamController = StreamController<List<Collection>>.broadcast();
 
   Map<String, Collection> collections = {};
 
@@ -60,24 +58,24 @@ class Database extends BaseComponent {
     return database;
   }
 
-  Stream<List<Collection>> stream(
-      {bool Function(Collection collection)? query}) {
-    if (query != null) {
-      return _streamController.stream.map((collections) {
-        return collections.where(query).toList();
-      });
-    }
+  // Stream<List<Collection>> stream(
+  //     {bool Function(Collection collection)? query}) {
+  //   if (query != null) {
+  //     return _streamController.stream.map((collections) {
+  //       return collections.where(query).toList();
+  //     });
+  //   }
 
-    return _streamController.stream;
-  }
+  //   return _streamController.stream;
+  // }
 
-  void _broadcastChanges() {
-    _streamController.add(List<Collection>.from(collections.values.toList()));
-  }
+  // void broadcastObjectsChanges() {
+  //   _streamController.add(List<Collection>.from(collections.values.toList()));
+  // }
 
-  void dispose() {
-    _streamController.close();
-  }
+  // void dispose() {
+  //   _streamController.close();
+  // }
 
   bool addCollection({
     required Collection collection,
@@ -90,7 +88,8 @@ class Database extends BaseComponent {
     }
 
     collections.addAll({name: collection});
-    _broadcastChanges();
+    broadcastObjectsChanges();
+
     return results;
   }
 
@@ -107,7 +106,7 @@ class Database extends BaseComponent {
     }
 
     object.update(data: data);
-    _broadcastChanges();
+    broadcastObjectsChanges();
 
     return results;
   }
@@ -122,7 +121,7 @@ class Database extends BaseComponent {
     if (object == null) {
       return false;
     }
-    _broadcastChanges();
+    broadcastObjectsChanges();
 
     return results;
   }
