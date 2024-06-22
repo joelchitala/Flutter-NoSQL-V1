@@ -1,5 +1,6 @@
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/base_component.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/entity_types.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/events.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/collection.dart';
 
 class Database extends BaseComponent<Database, Collection> {
@@ -90,6 +91,14 @@ class Database extends BaseComponent<Database, Collection> {
     collections.addAll({name: collection});
     broadcastObjectsChanges();
 
+    broadcastEventStream<Collection>(
+      eventNotifier: EventNotifier(
+        event: EventType.add,
+        entityType: EntityType.collection,
+        object: collection,
+      ),
+    );
+
     return results;
   }
 
@@ -108,6 +117,14 @@ class Database extends BaseComponent<Database, Collection> {
     object.update(data: data);
     broadcastObjectsChanges();
 
+    broadcastEventStream<Collection>(
+      eventNotifier: EventNotifier(
+        event: EventType.update,
+        entityType: EntityType.collection,
+        object: collection,
+      ),
+    );
+
     return results;
   }
 
@@ -122,6 +139,14 @@ class Database extends BaseComponent<Database, Collection> {
       return false;
     }
     broadcastObjectsChanges();
+
+    broadcastEventStream<Collection>(
+      eventNotifier: EventNotifier(
+        event: EventType.remove,
+        entityType: EntityType.collection,
+        object: collection,
+      ),
+    );
 
     return results;
   }

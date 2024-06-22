@@ -2,6 +2,7 @@ enum EntityType {
   database,
   collection,
   document,
+  map,
 }
 
 EntityType? toEntityType(String type) {

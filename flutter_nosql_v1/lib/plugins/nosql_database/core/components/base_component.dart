@@ -1,6 +1,8 @@
 import 'dart:async';
 
-abstract class BaseComponent<T, G> {
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/events.dart';
+
+abstract class BaseComponent<T, G> extends EventStreamWrapper {
   final String objectId;
   DateTime? timestamp;
   final _streamController = StreamController<List<G>>.broadcast();
@@ -29,7 +31,7 @@ abstract class BaseComponent<T, G> {
     _streamController.add(List<G>.from(objects.values.toList()));
   }
 
-  void disposeObjects() {
+  void disposeStreamObjects() {
     _streamController.close();
   }
 

@@ -6,7 +6,9 @@ class NoSQLManager {
 
   NoSQLDatabase noSQLDatabase = NoSQLDatabase();
 
-  NoSQLManager._();
+  NoSQLManager._() {
+    noSQLDatabase.metaManger;
+  }
   static final _instance = NoSQLManager._();
   factory NoSQLManager() => _instance;
 
