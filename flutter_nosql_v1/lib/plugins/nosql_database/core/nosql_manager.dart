@@ -32,7 +32,7 @@ class NoSQLManager with NoSqlDocumentProxy {
   }
 
   void setNoSqlDatabase(NoSQLDatabase db) {
-    // noSQLDatabase = db;
+    noSQLDatabase = db;
   }
 
   Future<bool> opMapper({required Future<bool> Function() func}) async {
