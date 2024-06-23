@@ -125,17 +125,35 @@ class RestrictionFieldObject {
         _cleanRestrictionTypes(type: expectedType.toString());
 
     bool validRuntimeType() {
-      return ((runtimeType == expectedRuntimeType) ||
+      bool res = ((runtimeType == expectedRuntimeType) ||
           (expectedType == dynamic.toString()));
+
+      if (callback != null && !res) {
+        callback(
+          "Runtime type of $data in $json is not valid. Expected runtime type $expectedRuntimeType",
+        );
+      }
+      return res;
     }
 
     bool isUnique() {
       if (!unique || dataList == null) return true;
-      return dataList.where((x) {
+
+      var obj = dataList.where((x) {
         if (caseSensitive) return x[key] == data;
 
         return x[key].toString().toLowerCase() == data.toString().toLowerCase();
-      }).isEmpty;
+      }).firstOrNull;
+
+      bool res = obj == null ? true : false;
+
+      if (callback != null && obj != null) {
+        callback(
+          "The data {$key:$data} in $json provided is not unique. Conflict found in $obj",
+        );
+      }
+
+      return res;
     }
 
     switch (restrictionType) {
@@ -240,31 +258,71 @@ class RestrictionValueObject {
         for (var expectedValue in cleanedList) {
           if (data == expectedValue) return true;
         }
+
+        if (callback != null) {
+          callback(
+            "Data $data provided does not equal any expected value in $expectedValues",
+          );
+        }
         return false;
       case RestrictionValueTypes.inveq:
         for (var expectedValue in cleanedList) {
-          if (data == expectedValue) return false;
+          if (data == expectedValue) {
+            if (callback != null) {
+              callback(
+                "Data $data provided equals any expected value in $expectedValues, ($expectedValue)",
+              );
+            }
+          }
         }
         return true;
       case RestrictionValueTypes.gt:
         for (var expectedValue in cleanedList) {
           if (data > expectedValue) return true;
         }
+
+        if (callback != null) {
+          callback(
+            "Data $data provided does not greater than any of the expected value $expectedValues",
+          );
+        }
         return false;
       case RestrictionValueTypes.lt:
         for (var expectedValue in cleanedList) {
-          if (data >= expectedValue) return false;
+          if (data >= expectedValue) {
+            if (callback != null) {
+              callback(
+                "Data $data provided is not less than $expectedValue in $expectedValues",
+              );
+            }
+            return false;
+          }
         }
+
         return true;
       case RestrictionValueTypes.eqgt:
         for (var expectedValue in cleanedList) {
           if (data >= expectedValue) return true;
         }
+
+        if (callback != null) {
+          callback(
+            "Data $data provided does not greater than or equals to any of the expected value $expectedValues",
+          );
+        }
         return false;
       case RestrictionValueTypes.eqlt:
         for (var expectedValue in cleanedList) {
-          if (data > expectedValue) return false;
+          if (data > expectedValue) {
+            if (callback != null) {
+              callback(
+                "Data $data provided is greater than $expectedValue in $expectedValues",
+              );
+            }
+            return false;
+          }
         }
+
         return true;
       case RestrictionValueTypes.range:
         var pairs = _arrayPairer(cleanedList);
@@ -276,6 +334,12 @@ class RestrictionValueObject {
           if ((data > expectedValue1) && (data < expectedValue2)) return true;
         }
 
+        if (callback != null) {
+          callback(
+            "Data $data provided is not in range of $pairs",
+          );
+        }
+
         return false;
       case RestrictionValueTypes.invrange:
         var pairs = _arrayPairer(cleanedList);
@@ -284,7 +348,14 @@ class RestrictionValueObject {
           var expectedValue1 = pair[0];
           var expectedValue2 = pair[1];
 
-          if ((data > expectedValue1) && (data < expectedValue2)) return false;
+          if ((data > expectedValue1) && (data < expectedValue2)) {
+            if (callback != null) {
+              callback(
+                "Data $data provided is in range of $pairs, between ($expectedValue1) and ($expectedValue2)",
+              );
+            }
+            return false;
+          }
         }
 
         return true;
@@ -298,6 +369,12 @@ class RestrictionValueObject {
           if ((data >= expectedValue1) && (data <= expectedValue2)) return true;
         }
 
+        if (callback != null) {
+          callback(
+            "Data $data provided is not in range and does not equal any endpoints of $pairs",
+          );
+        }
+
         return false;
       case RestrictionValueTypes.inveqrange:
         var pairs = _arrayPairer(cleanedList);
@@ -307,6 +384,11 @@ class RestrictionValueObject {
           var expectedValue2 = pair[1];
 
           if ((data >= expectedValue1) && (data <= expectedValue2)) {
+            if (callback != null) {
+              callback(
+                "Data $data provided is in range of or equals any of the endpoints of $pairs, between ($expectedValue1) and ($expectedValue2)",
+              );
+            }
             return false;
           }
         }
@@ -330,16 +412,45 @@ class RestrictionValueObject {
 }
 
 class RestrictionBuilder {
-  final Map<String, RestrictionFieldObject> _fieldObjects = {};
-  final Map<String, RestrictionValueObject> _valueObjects = {};
+  final Map<String, RestrictionFieldObject> fieldObjects = {};
+  final Map<String, RestrictionValueObject> valueObjects = {};
 
   RestrictionBuilder();
 
-  List<RestrictionFieldObject> get fieldObjects =>
-      _fieldObjects.values.toList();
+  factory RestrictionBuilder.fromJson({required Map<String, dynamic> data}) {
+    RestrictionBuilder builder = RestrictionBuilder();
 
-  List<RestrictionValueObject> get valueObjects =>
-      _valueObjects.values.toList();
+    Map<String, dynamic>? fieldObjectsData = data["fieldObjects"];
+    var valueObjectsData = data["valueObjects"];
+
+    fieldObjectsData?.forEach(
+      (key, value) {
+        builder.fieldObjects.addAll(
+          {
+            key: RestrictionFieldObject.fromJson(data: value),
+          },
+        );
+      },
+    );
+
+    valueObjectsData?.forEach(
+      (key, value) {
+        builder.valueObjects.addAll(
+          {
+            key: RestrictionValueObject.fromJson(data: value),
+          },
+        );
+      },
+    );
+
+    return builder;
+  }
+
+  List<RestrictionFieldObject> get fieldObjectsList =>
+      fieldObjects.values.toList();
+
+  List<RestrictionValueObject> get valueObjectsList =>
+      valueObjects.values.toList();
 
   bool addFieldObject({
     required RestrictionFieldObject object,
@@ -347,7 +458,7 @@ class RestrictionBuilder {
   }) {
     bool results = true;
 
-    if (_fieldObjects[object.key] != null) {
+    if (fieldObjects[object.key] != null) {
       if (callback != null) {
         callback(
           error:
@@ -357,7 +468,7 @@ class RestrictionBuilder {
       return false;
     }
 
-    _fieldObjects[object.key] = object;
+    fieldObjects[object.key] = object;
 
     if (callback != null) {
       callback(
@@ -374,7 +485,7 @@ class RestrictionBuilder {
   }) {
     bool results = true;
 
-    if (_valueObjects[object.key] != null) {
+    if (valueObjects[object.key] != null) {
       if (callback != null) {
         callback(
           error:
@@ -384,7 +495,7 @@ class RestrictionBuilder {
       return false;
     }
 
-    _valueObjects[object.key] = object;
+    valueObjects[object.key] = object;
 
     if (callback != null) {
       callback(
@@ -396,11 +507,11 @@ class RestrictionBuilder {
   }
 
   RestrictionFieldObject? getFieldObject(String key) {
-    return _fieldObjects.values.where((x) => x.key == key).firstOrNull;
+    return fieldObjects.values.where((x) => x.key == key).firstOrNull;
   }
 
   RestrictionValueObject? getValueObject(String key) {
-    return _valueObjects.values.where((x) => x.key == key).firstOrNull;
+    return valueObjects.values.where((x) => x.key == key).firstOrNull;
   }
 
   RestrictionBuilder addField({
@@ -433,7 +544,7 @@ class RestrictionBuilder {
   }) {
     bool results = true;
 
-    if (_fieldObjects.remove(key) == null) {
+    if (fieldObjects.remove(key) == null) {
       if (callback != null) {
         callback(
           error:
@@ -477,7 +588,7 @@ class RestrictionBuilder {
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) {
     bool results = true;
-    if (_valueObjects.remove(key) == null) {
+    if (valueObjects.remove(key) == null) {
       if (callback != null) {
         callback(
           error:
@@ -501,7 +612,7 @@ class RestrictionBuilder {
   }) {
     Map<String, dynamic> fieldObjectsJson = {};
 
-    for (var object in _fieldObjects.entries) {
+    for (var object in fieldObjects.entries) {
       var key = object.key;
       var value = object.value;
 
@@ -510,7 +621,7 @@ class RestrictionBuilder {
 
     Map<String, dynamic> valueObjectsJson = {};
 
-    for (var object in _valueObjects.entries) {
+    for (var object in valueObjects.entries) {
       var key = object.key;
       var value = object.value;
 
@@ -518,8 +629,8 @@ class RestrictionBuilder {
     }
 
     return {
-      "_fieldObjects": serialize ? fieldObjectsJson : _fieldObjects,
-      "_valueObjects": serialize ? valueObjectsJson : _valueObjects,
+      "fieldObjects": serialize ? fieldObjectsJson : fieldObjects,
+      "valueObjects": serialize ? valueObjectsJson : valueObjects,
     };
   }
 }

@@ -380,10 +380,10 @@ class NoSQLUtility extends Logging {
     if (reference.contains(".")) {
       database =
           _noSQLManager.getNoSqlDatabase().databases[reference.split(".")[0]];
-      collection = database?.collections[reference.split(".")[1]];
+      collection = database?.objects[reference.split(".")[1]];
     } else {
       database = _noSQLManager.getNoSqlDatabase().currentDatabase;
-      collection = database?.collections[reference];
+      collection = database?.objects[reference];
     }
 
     String? errorMessage;
@@ -421,7 +421,7 @@ class NoSQLUtility extends Logging {
       log(msg);
       return [];
     }
-    return database.collections.values.toList();
+    return database.objects.values.toList();
   }
 
   Stream<List<Collection>> getCollectionStream({

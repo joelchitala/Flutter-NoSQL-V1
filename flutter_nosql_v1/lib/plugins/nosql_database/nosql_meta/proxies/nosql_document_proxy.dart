@@ -9,7 +9,7 @@ mixin NoSqlDocumentProxy {
     required Collection collection,
   }) {
     return NoSQLManager()
-        .noSQLDatabase
+        .getNoSqlDatabase()
         .metaManger
         .metaRestrictionObject
         .getRestrictionBuilder(
@@ -88,14 +88,14 @@ mixin NoSqlDocumentProxy {
 
     results = fieldValidator(
       data: data,
-      objects: builder?.fieldObjects ?? [],
+      objects: builder?.fieldObjectsList ?? [],
       dataList: dataList,
       callback: callback,
     );
 
     results = valueValidator(
       data: data,
-      objects: builder?.valueObjects ?? [],
+      objects: builder?.valueObjectsList ?? [],
       callback: callback,
     );
 
@@ -126,14 +126,14 @@ mixin NoSqlDocumentProxy {
     for (var field in data) {
       results = fieldValidator(
         data: field,
-        objects: builder?.fieldObjects ?? [],
+        objects: builder?.fieldObjectsList ?? [],
         dataList: dataList,
         callback: callback,
       );
 
       results = valueValidator(
         data: field,
-        objects: builder?.valueObjects ?? [],
+        objects: builder?.valueObjectsList ?? [],
         callback: callback,
       );
 
@@ -175,14 +175,14 @@ mixin NoSqlDocumentProxy {
 
     results = fieldValidator(
       data: data,
-      objects: builder?.fieldObjects ?? [],
+      objects: builder?.fieldObjectsList ?? [],
       dataList: dataList,
       callback: callback,
     );
 
     results = valueValidator(
       data: data,
-      objects: builder?.valueObjects ?? [],
+      objects: builder?.valueObjectsList ?? [],
       callback: callback,
     );
 
@@ -231,7 +231,7 @@ mixin NoSqlDocumentProxy {
 
     results = fieldValidator(
       data: data,
-      objects: builder?.fieldObjects ?? [],
+      objects: builder?.fieldObjectsList ?? [],
       dataList: dataList,
       callback: callback,
     );
@@ -242,7 +242,7 @@ mixin NoSqlDocumentProxy {
 
     results = valueValidator(
       data: data,
-      objects: builder?.valueObjects ?? [],
+      objects: builder?.valueObjectsList ?? [],
       callback: callback,
     );
 

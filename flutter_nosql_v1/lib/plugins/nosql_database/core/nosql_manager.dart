@@ -5,7 +5,7 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_transactional/nosq
 class NoSQLManager with NoSqlDocumentProxy {
   final double _version = 1.0;
 
-  NoSQLDatabase noSQLDatabase = NoSQLDatabase();
+  NoSQLDatabase _noSQLDatabase = NoSQLDatabase();
 
   NoSQLManager._();
   static final _instance = NoSQLManager._();
@@ -13,7 +13,7 @@ class NoSQLManager with NoSqlDocumentProxy {
 
   void initialize({required Map<String, dynamic> data}) {
     try {
-      noSQLDatabase.initialize(data: data["noSQLDatabase"]);
+      _noSQLDatabase.initialize(data: data["_noSQLDatabase"]);
     } catch (e) {
       throw "Error $e occured in initializing an instance of NoSQLDatabase";
     }
@@ -26,13 +26,13 @@ class NoSQLManager with NoSqlDocumentProxy {
     var transactional = transactionalManager.currentTransactional;
 
     if (transactional != null) {
-      return transactional.noSQLDatabase ?? noSQLDatabase;
+      return transactional.noSQLDatabase ?? _noSQLDatabase;
     }
-    return noSQLDatabase;
+    return _noSQLDatabase;
   }
 
   void setNoSqlDatabase(NoSQLDatabase db) {
-    noSQLDatabase = db;
+    _noSQLDatabase = db;
   }
 
   Future<bool> opMapper({required Future<bool> Function() func}) async {
@@ -61,9 +61,9 @@ class NoSQLManager with NoSqlDocumentProxy {
   }) {
     return {
       "version": _version,
-      "noSQLDatabase": serialize
-          ? noSQLDatabase.toJson(serialize: serialize)
-          : noSQLDatabase,
+      "_noSQLDatabase": serialize
+          ? _noSQLDatabase.toJson(serialize: serialize)
+          : _noSQLDatabase,
     };
   }
 }

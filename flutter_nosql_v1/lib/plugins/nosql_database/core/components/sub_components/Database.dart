@@ -6,7 +6,6 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_comp
 class Database extends BaseComponent<Database, Collection> {
   String name;
   EntityType type = EntityType.database;
-  Map<String, Collection> collections = {};
 
   Database({
     required super.objectId,
@@ -15,9 +14,9 @@ class Database extends BaseComponent<Database, Collection> {
   });
 
   factory Database.fromJson({required Map<String, dynamic> data}) {
-    Map<String, Collection> collections = {};
+    Map<String, Collection> objects = {};
 
-    Map<String, dynamic>? jsonCollections = data["collections"];
+    Map<String, dynamic>? jsonCollections = data["objects"];
 
     if (jsonCollections != null) {
       try {
@@ -35,7 +34,7 @@ class Database extends BaseComponent<Database, Collection> {
 
           if (tempEntries.isEmpty) continue;
 
-          collections.addAll(
+          objects.addAll(
             {
               key: Collection.fromJson(data: tempEntries),
             },
@@ -52,7 +51,7 @@ class Database extends BaseComponent<Database, Collection> {
       timestamp: DateTime.tryParse("${data["timestamp"]}"),
     );
 
-    database.collections = collections;
+    database.objects = objects;
 
     return database;
   }
@@ -63,11 +62,11 @@ class Database extends BaseComponent<Database, Collection> {
     bool results = true;
     var name = collection.name.toLowerCase();
 
-    if (collections.containsKey(name)) {
+    if (objects.containsKey(name)) {
       return false;
     }
 
-    collections.addAll({name: collection});
+    objects.addAll({name: collection});
     broadcastObjectsChanges();
 
     broadcastEventStream<Collection>(
@@ -87,7 +86,7 @@ class Database extends BaseComponent<Database, Collection> {
   }) {
     bool results = true;
     var name = collection.name.toLowerCase();
-    var object = collections[name];
+    var object = objects[name];
 
     if (object == null) {
       return false;
@@ -113,7 +112,7 @@ class Database extends BaseComponent<Database, Collection> {
     bool results = true;
 
     var name = collection.name.toLowerCase();
-    var object = collections.remove(name);
+    var object = objects.remove(name);
 
     if (object == null) {
       return false;
@@ -144,7 +143,7 @@ class Database extends BaseComponent<Database, Collection> {
   Map<String, dynamic> toJson({required bool serialize}) {
     Map<String, Map> collectionEntries = {};
 
-    collections.forEach(
+    objects.forEach(
       (key, value) {
         collectionEntries.addAll(
           {
@@ -159,7 +158,7 @@ class Database extends BaseComponent<Database, Collection> {
         {
           "name": name,
           "type": serialize ? type.toString() : type,
-          "collections": serialize ? collectionEntries : collections,
+          "objects": serialize ? collectionEntries : objects,
         },
       );
   }

@@ -5,6 +5,21 @@ class NoSqlMetaRestrictionObject {
 
   NoSqlMetaRestrictionObject();
 
+  void initialize({required Map<String, dynamic> data}) {
+    Map<String, dynamic>? collectionRestrictionsData =
+        data["_collectionRestrictions"];
+
+    collectionRestrictionsData?.forEach(
+      (key, value) {
+        _collectionRestrictions.addAll(
+          {
+            key: RestrictionBuilder.fromJson(data: value),
+          },
+        );
+      },
+    );
+  }
+
   Map<String, RestrictionBuilder> get collectionRestrictions =>
       _collectionRestrictions;
 
@@ -38,7 +53,7 @@ class NoSqlMetaRestrictionObject {
 
     bool res = true;
 
-    for (var fieldObject in restrictionBuilder.fieldObjects) {
+    for (var fieldObject in restrictionBuilder.fieldObjectsList) {
       res = ref.addFieldObject(
         object: fieldObject,
         callback: callback,
@@ -47,7 +62,7 @@ class NoSqlMetaRestrictionObject {
       if (!res) results = false;
     }
 
-    for (var valueObject in restrictionBuilder.valueObjects) {
+    for (var valueObject in restrictionBuilder.valueObjectsList) {
       res = ref.addValueObject(
         object: valueObject,
         callback: callback,
@@ -114,7 +129,7 @@ class NoSqlMetaRestrictionObject {
     return {
       "_collectionRestrictions": serialize
           ? collectionRestrictionsTempEntries
-          : Map<String, RestrictionBuilder>.from(_collectionRestrictions),
+          : _collectionRestrictions,
     };
   }
 }

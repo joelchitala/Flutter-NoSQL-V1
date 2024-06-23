@@ -115,7 +115,7 @@ class Document extends BaseComponent {
       ..addAll(
         {
           "type": serialize ? type.toString() : type,
-          "fields": fields,
+          "fields": serialize ? fields : fields,
         },
       );
   }

@@ -46,7 +46,20 @@ class NoSQLDatabase {
     try {
       NoSQLDatabase noSQLDatabase = NoSQLDatabase();
 
-      noSQLDatabase.setDatabase(toJson(serialize: false));
+      noSQLDatabase.setDatabase(
+        Map<String, dynamic>.from(
+          toJson(serialize: false),
+        ),
+      );
+
+      // var mp_1 = toJson(serialize: false);
+      // var mp_2 = Map<String, dynamic>.from(
+      //   toJson(serialize: false),
+      // );
+
+      // print(mp_1 == mp_2);
+      // print(this.databases == noSQLDatabase.databases);
+      // print("");
 
       return noSQLDatabase;
     } catch (_) {}
@@ -69,7 +82,11 @@ class NoSQLDatabase {
 
   void setDatabase(Map<String, dynamic> data) {
     inMemoryOnlyMode = data["inMemoryOnlyMode"] ?? inMemoryOnlyMode;
-    databases = data["databases"] ?? databases;
+    databases = data["databases"] == null
+        ? databases
+        : Map<String, Database>.from(data["databases"]);
+
+    metaManger = data["metaManger"] ?? metaManger;
   }
 
   void initialize({required Map<String, dynamic> data}) {
@@ -92,7 +109,11 @@ class NoSQLDatabase {
         },
       );
 
-      print(data["metaManger"]);
+      Map<String, dynamic>? jsonMetaManager = data["metaManger"];
+
+      if (jsonMetaManager != null) {
+        metaManger.initialize(data: jsonMetaManager);
+      }
     } catch (e) {
       rethrow;
     }
@@ -206,10 +227,9 @@ class NoSQLDatabase {
 
     return {
       "version": _version,
-      "_timestamp": _timestamp.toIso8601String(),
+      "_timestamp": serialize ? _timestamp.toIso8601String() : _timestamp,
       "inMemoryOnlyMode": inMemoryOnlyMode,
-      "databases":
-          serialize ? databaseEntries : Map<String, Database>.from(databases),
+      "databases": serialize ? databaseEntries : databases,
       "metaManger": serialize
           ? metaManger.toJson(
               serialize: serialize,
