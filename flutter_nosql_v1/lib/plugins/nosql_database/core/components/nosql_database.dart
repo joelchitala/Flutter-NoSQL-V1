@@ -10,7 +10,6 @@ class NoSQLDatabase extends BaseComponent<NoSQLDatabase, Database> {
   NoSqlMetaManager metaManger = NoSqlMetaManager();
 
   final _streamController = StreamController<List<Database>>.broadcast();
-  // Map<String, Database> objects = {};
   Database? currentDatabase;
   bool inMemoryOnlyMode;
 
