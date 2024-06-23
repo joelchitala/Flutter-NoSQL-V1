@@ -1,13 +1,13 @@
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/base_component.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/events.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/collection.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/database.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/document.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/nosql_manager.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/components/restriction_object.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_transactional/nosql_transactional.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/fileoperations.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/utils.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/addons/nosql_transactional/nosql_transactional.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/base_component.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/events.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/sub_components/collection.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/sub_components/database.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/sub_components/document.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/meta/components/sub_components/restriction_object.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/utils/core_utils.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/utils/fileoperations.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/nosql_manager.dart';
 
 class NoSQLUtility {
   final NoSQLManager _noSQLManager = NoSQLManager();
@@ -38,7 +38,7 @@ class NoSQLUtility {
   }
 
   Future<bool> initialize({
-    String databasePath = "database.json",
+    required String databasePath,
   }) async {
     bool results = true;
 
@@ -50,8 +50,7 @@ class NoSQLUtility {
   }
 
   Future<bool> commitToDisk({
-    String databasePath = "database.json",
-    String loggerPath = "logger.json",
+    required String databasePath,
   }) async {
     bool results = true;
 

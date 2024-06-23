@@ -394,54 +394,28 @@ class RestrictionBuilder {
 
   bool addFieldObject({
     required RestrictionFieldObject object,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) {
     bool results = true;
 
     if (fieldObjects[object.key] != null) {
-      if (callback != null) {
-        callback(
-          error:
-              "Failed to add field restricton. Field restriction with the key ${object.key} already exists",
-        );
-      }
       return false;
     }
 
     fieldObjects[object.key] = object;
-
-    if (callback != null) {
-      callback(
-        res: (true, "Field restriction added"),
-      );
-    }
 
     return results;
   }
 
   bool addValueObject({
     required RestrictionValueObject object,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) {
     bool results = true;
 
     if (valueObjects[object.key] != null) {
-      if (callback != null) {
-        callback(
-          error:
-              "Failed to add value restricton. Value restriction with the key ${object.key} already exists",
-        );
-      }
       return false;
     }
 
     valueObjects[object.key] = object;
-
-    if (callback != null) {
-      callback(
-        res: (true, "Value restriction added"),
-      );
-    }
 
     return results;
   }
@@ -461,7 +435,6 @@ class RestrictionBuilder {
     bool exclude = false,
     bool caseSensitive = false,
     RestrictionFieldTypes type = RestrictionFieldTypes.fieldRestriction,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) {
     addFieldObject(
       object: RestrictionFieldObject(
@@ -473,31 +446,17 @@ class RestrictionBuilder {
         exclude: exclude,
         caseSensitive: caseSensitive,
       ),
-      callback: callback,
     );
     return this;
   }
 
   bool removeField({
     required String key,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) {
     bool results = true;
 
     if (fieldObjects.remove(key) == null) {
-      if (callback != null) {
-        callback(
-          error:
-              "Failed to remove field restricton. Field restriction with the key $key not found",
-        );
-      }
       return false;
-    }
-
-    if (callback != null) {
-      callback(
-        res: (true, "Field restriction removed"),
-      );
     }
 
     return results;
@@ -508,7 +467,6 @@ class RestrictionBuilder {
     required List expectedValues,
     bool caseSensitive = false,
     RestrictionValueTypes type = RestrictionValueTypes.eq,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) {
     addValueObject(
       object: RestrictionValueObject(
@@ -518,30 +476,16 @@ class RestrictionBuilder {
         expectedValues: expectedValues,
         caseSensitive: caseSensitive,
       ),
-      callback: callback,
     );
     return this;
   }
 
   bool removeValue({
     required String key,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) {
     bool results = true;
     if (valueObjects.remove(key) == null) {
-      if (callback != null) {
-        callback(
-          error:
-              "Failed to remove value restricton. Value restriction with the key $key not found",
-        );
-      }
       return false;
-    }
-
-    if (callback != null) {
-      callback(
-        res: (true, "Value restriction removed"),
-      );
     }
 
     return results;

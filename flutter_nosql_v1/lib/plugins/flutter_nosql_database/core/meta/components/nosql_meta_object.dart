@@ -1,4 +1,4 @@
-import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/components/restriction_object.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/meta/components/sub_components/restriction_object.dart';
 
 class NoSqlMetaRestrictionObject {
   final Map<String, RestrictionBuilder> _collectionRestrictions = {};
@@ -39,7 +39,6 @@ class NoSqlMetaRestrictionObject {
   bool addRestriction({
     required String objectId,
     required RestrictionBuilder restrictionBuilder,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) {
     bool results = true;
 
@@ -56,7 +55,6 @@ class NoSqlMetaRestrictionObject {
     for (var fieldObject in restrictionBuilder.fieldObjectsList) {
       res = ref.addFieldObject(
         object: fieldObject,
-        callback: callback,
       );
 
       if (!res) results = false;
@@ -65,7 +63,6 @@ class NoSqlMetaRestrictionObject {
     for (var valueObject in restrictionBuilder.valueObjectsList) {
       res = ref.addValueObject(
         object: valueObject,
-        callback: callback,
       );
 
       if (!res) results = false;
@@ -78,7 +75,6 @@ class NoSqlMetaRestrictionObject {
     required String objectId,
     List<String> fieldObjectKeys = const [],
     List<String> valueObjectKeys = const [],
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) {
     bool results = true;
 
@@ -93,7 +89,6 @@ class NoSqlMetaRestrictionObject {
     for (var key in fieldObjectKeys) {
       res = ref.removeField(
         key: key,
-        callback: callback,
       );
 
       if (!res) results = false;
@@ -102,7 +97,6 @@ class NoSqlMetaRestrictionObject {
     for (var key in valueObjectKeys) {
       res = ref.removeValue(
         key: key,
-        callback: callback,
       );
       if (!res) results = false;
     }

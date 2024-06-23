@@ -1,4 +1,4 @@
-import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/nosql_meta_object.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/meta/components/nosql_meta_object.dart';
 
 class NoSqlMetaManager {
   final NoSqlMetaRestrictionObject _metaRestrictionObject =

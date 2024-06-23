@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/nosql_utilities.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/addons/nosql_utilities.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class NoSQlInitilizationObject {
@@ -118,7 +118,6 @@ class _NoSQLStatefulWrapperState extends State<NoSQLStatefulWrapper>
             TextButton(
               child: const Text('Close App'),
               onPressed: () {
-                // Close the app
                 Navigator.of(context).pop();
                 Future.delayed(const Duration(milliseconds: 100), () {
                   SystemNavigator.pop();

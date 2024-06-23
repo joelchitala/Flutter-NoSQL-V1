@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/base_component.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/database.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/nosql_meta_manager.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/utils.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/base_component.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/sub_components/database.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/meta/nosql_meta_manager.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/utils/core_utils.dart';
 
 class NoSQLDatabase extends BaseComponent<NoSQLDatabase, Database> {
   final double _version = 1.0;

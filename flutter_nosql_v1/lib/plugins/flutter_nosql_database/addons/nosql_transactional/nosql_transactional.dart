@@ -1,5 +1,5 @@
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/nosql_database.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_transactional/nosql_transactional_manager.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/addons/nosql_transactional/nosql_transactional_manager.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/nosql_database.dart';
 
 class NoSQLTransactional {
   NoSQLDatabase? _noSQLDatabase;

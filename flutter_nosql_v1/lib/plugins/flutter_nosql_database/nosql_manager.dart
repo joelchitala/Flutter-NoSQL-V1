@@ -1,10 +1,10 @@
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/base_component.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/events.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/nosql_database.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/collection.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/proxies/nosql_document_proxy.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_transactional/nosql_transactional_manager.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/utils.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/addons/meta/proxies/nosql_document_proxy.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/addons/nosql_transactional/nosql_transactional_manager.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/base_component.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/events.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/nosql_database.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/sub_components/collection.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/utils/core_utils.dart';
 
 class NoSQLManager with NoSqlDocumentProxy {
   final double _version = 1.0;
@@ -17,7 +17,6 @@ class NoSQLManager with NoSqlDocumentProxy {
   NoSQLManager._() {
     _eventStream.eventStream.listen(
       (event) {
-        print(event);
         switch (event.event) {
           case EventType.add:
             break;

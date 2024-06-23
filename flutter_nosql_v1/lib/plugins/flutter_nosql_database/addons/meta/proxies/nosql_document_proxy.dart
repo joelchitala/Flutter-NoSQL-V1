@@ -1,11 +1,11 @@
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/base_component.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/events.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/collection.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/document.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/nosql_manager.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/data_structures/chains/unidirectional_chain.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/components/restriction_object.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/utils.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/addons/datastructures/chains/unidirectional_chain.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/addons/utilities/utils.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/base_component.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/events.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/sub_components/collection.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/sub_components/document.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/meta/components/sub_components/restriction_object.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/nosql_manager.dart';
 
 mixin NoSqlDocumentProxy {
   final EventStreamWrapper _streamWrapper = EventStreamWrapper();

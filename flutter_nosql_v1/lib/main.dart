@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/nosql_database.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/collection.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/database.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/document.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/nosql_manager.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/components/restriction_object.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/utils.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/nosql_stateful_wrapper.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/nosql_utilities.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/addons/nosql_utilities.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/wrapper/nosql_stateful_wrapper.dart';
 import 'package:flutter_nosql_v1/ui/screens/nosql_database_screen.dart';
 
 Future<void> initDB(NoSQlInitilizationObject initilizationObject) async {
@@ -32,14 +25,14 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: NoSQLStatefulWrapper(
           initializeFromDisk: true,
           checkPermissions: true,
-          body: const NoSQLDatabaseScreen(),
-          commitStates: const [
+          body: NoSQLDatabaseScreen(),
+          commitStates: [
             AppLifecycleState.inactive,
           ],
 
