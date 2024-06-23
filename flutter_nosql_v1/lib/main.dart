@@ -74,7 +74,7 @@ class MainApp extends StatelessWidget {
             // print(await sqlUtility.noSQLDatabaseToJson(serialize: true));
 
             // await transactional.commit();
-            // print(await sqlUtility.noSQLDatabaseToJson(serialize: true));
+            print(await sqlUtility.noSQLDatabaseToJson(serialize: true));
           },
           child: const Icon(Icons.add),
         ),

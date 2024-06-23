@@ -24,14 +24,17 @@ class NoSQLTransactionalManager extends Logging {
 
         bool results = true;
 
-        var db = NoSQLDatabase.copy(
-          initialDB: _noSqlManager.noSQLDatabase,
-          callback: (res) {
-            results = res;
-          },
-        );
+        // var db = NoSQLDatabase.copy(
+        //   initialDB: _noSqlManager.noSQLDatabase,
+        //   callback: (res) {
+        //     results = res;
+        //   },
+        // );
 
-        if (!results) return -1;
+        // if (!results) return -1;
+
+        var db = _noSqlManager.noSQLDatabase.noSQLDatabaseCopy();
+        if (db == null) return -1;
 
         setDatabase(db);
 

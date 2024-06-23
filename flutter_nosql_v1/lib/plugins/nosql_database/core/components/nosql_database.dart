@@ -42,17 +42,17 @@ class NoSQLDatabase {
     );
   }
 
-  // NoSQLDatabase? noSQLDatabaseCopy() {
-  //   try {
-  //     NoSQLDatabase noSQLDatabase = NoSQLDatabase();
+  NoSQLDatabase? noSQLDatabaseCopy() {
+    try {
+      NoSQLDatabase noSQLDatabase = NoSQLDatabase();
 
-  //     noSQLDatabase.initialize(data: toJson(serialize: true));
+      noSQLDatabase.setDatabase(toJson(serialize: false));
 
-  //     return noSQLDatabase;
-  //   } catch (_) {}
+      return noSQLDatabase;
+    } catch (_) {}
 
-  //   return null;
-  // }
+    return null;
+  }
 
   factory NoSQLDatabase.copy({
     required NoSQLDatabase initialDB,
