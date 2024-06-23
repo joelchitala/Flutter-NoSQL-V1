@@ -1,8 +1,20 @@
 import 'dart:async';
 
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/events.dart';
+enum EntityType {
+  database,
+  collection,
+  document,
+  map,
+}
 
-abstract class BaseComponent<T, G> extends EventStreamWrapper {
+EntityType? toEntityType(String type) {
+  for (var value in EntityType.values) {
+    if (value.toString() == type) return value;
+  }
+  return null;
+}
+
+abstract class BaseComponent<T, G extends BaseComponent<dynamic, dynamic>> {
   final String objectId;
   DateTime? timestamp;
   final _streamController = StreamController<List<G>>.broadcast();
@@ -15,7 +27,7 @@ abstract class BaseComponent<T, G> extends EventStreamWrapper {
     timestamp = timestamp ?? DateTime.now();
   }
 
-  void update({required Map<String, dynamic> data});
+  bool update({required Map<String, dynamic> data});
 
   Stream<List<G>> stream({bool Function(G object)? query}) {
     if (query != null) {
@@ -36,9 +48,22 @@ abstract class BaseComponent<T, G> extends EventStreamWrapper {
   }
 
   Map<String, dynamic> toJson({required bool serialize}) {
+    Map<String, Map> objectEntries = {};
+
+    objects.forEach(
+      (key, value) {
+        objectEntries.addAll(
+          {
+            key: value.toJson(serialize: serialize),
+          },
+        );
+      },
+    );
+
     return {
       "objectId": objectId,
       "timestamp": serialize ? timestamp?.toIso8601String() : timestamp,
+      "objects": serialize ? objectEntries : objects,
     };
   }
 }

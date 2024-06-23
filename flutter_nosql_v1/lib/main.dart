@@ -16,7 +16,6 @@ Future<void> initDB(NoSQlInitilizationObject initilizationObject) async {
     if (initilizationObject.initializeFromDisk) {
       await noSQLUtility.initialize(
         databasePath: initilizationObject.databasePath,
-        loggerPath: initilizationObject.loggerPath,
       );
     }
   } catch (_) {}
@@ -37,97 +36,99 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: NoSQLStatefulWrapper(
+          initializeFromDisk: true,
           checkPermissions: true,
-          initilizationObject: NoSQlInitilizationObject(
-            initializeFromDisk: false,
-          ),
           body: const NoSQLDatabaseScreen(),
           commitStates: const [
             AppLifecycleState.inactive,
           ],
 
           // body: const Center(),
+          // floatingActionButton: FloatingActionButton(
+          //   onPressed: () async {
+          //     NoSQLUtility sqlUtility = NoSQLUtility();
+
+          //     // print(await sqlUtility.noSQLDatabaseToJson(serialize: true));
+
+          //     await sqlUtility.createDatabase(name: "myriad");
+          //     await sqlUtility.createCollection(reference: "myriad.staff");
+
+          //     await sqlUtility.setRestrictions(
+          //       reference: "myriad.staff",
+          //       builder: RestrictionBuilder()
+          //           .addField(
+          //             key: "name",
+          //             unique: true,
+          //             expectedType: String,
+          //           )
+          //           .addValue(
+          //             key: "age",
+          //             expectedValues: [25],
+          //             type: RestrictionValueTypes.eqgt,
+          //           ),
+          //     );
+
+          //     try {
+          //       var transactional = sqlUtility.transactional(
+          //         () async {
+          //           await sqlUtility.insertDocuments(
+          //             reference: "myriad.staff",
+          //             data: [
+          //               {
+          //                 "name": "Mike",
+          //                 "age": 35,
+          //               },
+          //               {
+          //                 "name": "Mike",
+          //                 "age": 30,
+          //               },
+          //               {
+          //                 "name": "Jane",
+          //                 "age": 27,
+          //                 "gender": "Female",
+          //               },
+          //             ],
+          //           );
+
+          //           // await sqlUtility.updateDocuments(
+          //           //   reference: "myriad.staff",
+          //           //   query: (document) => document.fields["name"] == "Jane",
+          //           //   data: {
+          //           //     "age": 38,
+          //           //     "!unset": ["gender"]
+          //           //   },
+          //           // );
+
+          //           // await sqlUtility.removeDocuments(
+          //           //   reference: "myriad.staff",
+          //           //   query: (document) => document.fields["name"] == "Mike",
+          //           // );
+
+          //           await sqlUtility.removeCollection(reference: "myriad.staff");
+          //         },
+          //       );
+
+          //       var res = await transactional.execute();
+
+          //       // print(res);
+          //       // print(NoSQLManager().currentDB.toJson(serialize: true));
+
+          //       await transactional.commit();
+          //       // print("");
+          //       // print(NoSQLManager().currentDB.toJson(serialize: true));
+
+          //       // print("");
+          //       // print(
+          //       //   transactional.noSQLDatabase?.toJson(
+          //       //     serialize: true,
+          //       //   ),
+          //       // );
+          //     } catch (e) {
+          //       print(e);
+          //     }
+          //   },
+          //   child: const Icon(Icons.add),
         ),
-        // floatingActionButton: FloatingActionButton(
-        //   onPressed: () async {
-        //     NoSQLUtility sqlUtility = NoSQLUtility();
-
-        //     // print(await sqlUtility.noSQLDatabaseToJson(serialize: true));
-
-        //     await sqlUtility.createDatabase(name: "myriad");
-        //     await sqlUtility.createCollection(reference: "myriad.staff");
-
-        //     var transactional = sqlUtility.transactional(
-        //       () async {
-        //         await sqlUtility.setRestrictions(
-        //           reference: "myriad.staff",
-        //           builder: RestrictionBuilder()
-        //               .addField(
-        //                 key: "name",
-        //                 unique: true,
-        //                 expectedType: String,
-        //               )
-        //               .addValue(
-        //                 key: "age",
-        //                 expectedValues: [25],
-        //                 type: RestrictionValueTypes.eqgt,
-        //               ),
-        //         );
-        //         await sqlUtility.insertDocument(
-        //           reference: "myriad.staff",
-        //           data: {
-        //             "name": "Mike",
-        //             "age": 35,
-        //           },
-        //           callback: ({error, res}) {
-        //             print(error);
-        //           },
-        //         );
-        //         await sqlUtility.insertDocument(
-        //           reference: "myriad.staff",
-        //           data: {
-        //             "name": "Mike",
-        //             "age": 30,
-        //           },
-        //           callback: ({error, res}) {
-        //             print(error);
-        //           },
-        //         );
-        //         // await sqlUtility.insertDocument(
-        //         //   reference: "myriad.staff",
-        //         //   data: {
-        //         //     "name": "Jane",
-        //         //     "age": 22,
-        //         //   },
-        //         //   callback: ({error, res}) {
-        //         //     print(error);
-        //         //   },
-        //         // );
-        //         // await sqlUtility.insertDocument(
-        //         //   reference: "myriad.staff",
-        //         //   data: {
-        //         //     "name": 20,
-        //         //     "age": 22,
-        //         //   },
-        //         //   callback: ({error, res}) {
-        //         //     print(error);
-        //         //   },
-        //         // );
-        //       },
-        //     );
-
-        //     await transactional.execute();
-        //     // print(NoSQLManager().noSQLDatabase.toJson(serialize: true));
-
-        //     // await transactional.commit();
-        //     // print("");
-        //     // print(NoSQLManager().noSQLDatabase.toJson(serialize: true));
-
-        //     // print("");
-        //     // print(transactional.noSQLDatabase?.toJson(serialize: true));
-        //   },
-        //   child: const Icon(Icons.add),
-        // ),
       ),
     );
   }

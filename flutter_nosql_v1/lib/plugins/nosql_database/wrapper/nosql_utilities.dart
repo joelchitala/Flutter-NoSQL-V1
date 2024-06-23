@@ -1,3 +1,5 @@
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/base_component.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/events.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/collection.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/database.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/document.dart';
@@ -6,10 +8,10 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/components/re
 import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_transactional/nosql_transactional.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/fileoperations.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/utils.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/logger.dart';
 
-class NoSQLUtility extends Logging {
+class NoSQLUtility {
   final NoSQLManager _noSQLManager = NoSQLManager();
+  final EventStreamWrapper _streamWrapper = EventStreamWrapper();
 
   late final Future<bool> Function({required Future<bool> Function() func})
       _opMapper;
@@ -20,7 +22,6 @@ class NoSQLUtility extends Logging {
 
   Future<bool> clean({
     String databasePath = "database.json",
-    String loggerPath = "logger.json",
     required bool delete,
   }) async {
     bool results = true;
@@ -29,51 +30,22 @@ class NoSQLUtility extends Logging {
       return results;
     }
 
-    bool savedDatabase = await cleanFile(
+    results = await cleanFile(
       databasePath,
     );
-
-    bool savedLogger = await cleanFile(
-      loggerPath,
-    );
-
-    if (!savedDatabase) {
-      log("Failed to clean database to path $databasePath");
-    }
-
-    if (!savedLogger) {
-      log("Failed to clean logger to path $loggerPath");
-    }
 
     return results;
   }
 
   Future<bool> initialize({
     String databasePath = "database.json",
-    String loggerPath = "logger.json",
   }) async {
     bool results = true;
 
-    try {
-      Map<String, dynamic>? databaseData = await readFile(databasePath);
-
-      Map<String, dynamic>? loggerData = await readFile(loggerPath);
-
-      if (databaseData != null) {
-        _noSQLManager.initialize(data: databaseData);
-      } else {
-        log("Failed to initialize database with path $databasePath");
-      }
-
-      if (loggerData != null) {
-        initializeLogger(data: loggerData);
-      } else {
-        log("Failed to initialize logger with path $loggerPath");
-      }
-    } catch (e) {
-      rethrow;
+    Map<String, dynamic>? databaseData = await readFile(databasePath);
+    if (databaseData != null) {
+      _noSQLManager.initialize(data: databaseData);
     }
-
     return results;
   }
 
@@ -83,30 +55,12 @@ class NoSQLUtility extends Logging {
   }) async {
     bool results = true;
 
-    try {
-      bool savedDatabase = await writeFile(
-        databasePath,
-        _noSQLManager.toJson(
-          serialize: true,
-        ),
-      );
-
-      bool savedLogger = await writeFile(
-        loggerPath,
-        loggerToJson(),
-      );
-
-      if (!savedDatabase) {
-        log("Failed to save database to path $databasePath");
-      }
-
-      if (!savedLogger) {
-        log("Failed to save logger to path $loggerPath");
-      }
-    } catch (e) {
-      rethrow;
-    }
-
+    results = await writeFile(
+      databasePath,
+      _noSQLManager.toJson(
+        serialize: true,
+      ),
+    );
     return results;
   }
 
@@ -135,25 +89,11 @@ class NoSQLUtility extends Logging {
 
   Future<bool> createDatabase({
     required String name,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
     return await _opMapper(func: () async {
-      name = name.toLowerCase();
+      Database? db = await getDatabase(reference: name);
 
-      Database? db = _noSQLManager.getNoSqlDatabase().databases[name];
-      String? successMessage, errorMessage;
-
-      if (name.isEmpty) {
-        errorMessage = "Failed to create Database. name can not be empty";
-        log(errorMessage);
-        if (callback != null) callback(error: errorMessage);
-        return false;
-      }
-
-      if (db != null) {
-        errorMessage = "Failed to create $name database, database exists";
-        log(errorMessage);
-        if (callback != null) callback(error: errorMessage);
+      if (name.isEmpty || db != null) {
         return false;
       }
 
@@ -163,30 +103,34 @@ class NoSQLUtility extends Logging {
         timestamp: DateTime.now(),
       );
 
-      bool results =
-          _noSQLManager.getNoSqlDatabase().addDatabase(database: database);
+      bool results = _noSQLManager.getNoSqlDatabase().addDatabase(
+            database: database,
+          );
 
       if (results) {
-        successMessage = "$name database successfully created";
-        log(successMessage);
-        if (callback != null) callback(res: (true, successMessage));
+        _streamWrapper.broadcastEventStream<Database>(
+          eventNotifier: EventNotifier(
+            event: EventType.add,
+            entityType: EntityType.database,
+            object: database,
+          ),
+        );
       }
 
-      return true;
+      return results;
     });
   }
 
   Future<Database?> getDatabase({
     required String reference,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
     String name = reference.toLowerCase();
 
-    if (reference.contains(".")) {
+    if (name.contains(".")) {
       name = reference.split(".")[0];
     }
-    Database? db =
-        _noSQLManager.getNoSqlDatabase().databases[name.toLowerCase()];
+
+    Database? db = _noSQLManager.getNoSqlDatabase().objects[name];
     return db;
   }
 
@@ -194,13 +138,8 @@ class NoSQLUtility extends Logging {
     bool Function(Database database)? query,
   }) async {
     return query == null
-        ? _noSQLManager.getNoSqlDatabase().databases.values.toList()
-        : _noSQLManager
-            .getNoSqlDatabase()
-            .databases
-            .values
-            .where(query)
-            .toList();
+        ? _noSQLManager.getNoSqlDatabase().objects.values.toList()
+        : _noSQLManager.getNoSqlDatabase().objects.values.where(query).toList();
   }
 
   Stream<List<Database>> getDatabaseStream({
@@ -209,46 +148,60 @@ class NoSQLUtility extends Logging {
     yield* _noSQLManager.getNoSqlDatabase().stream(query: query);
   }
 
-  Future<bool> deleteDatabase({
+  Future<bool> updateDatabase({
     required String name,
-    void Function({String? error, (bool res, String msg)? res})? callback,
+    required Map<String, dynamic> data,
   }) async {
     return await _opMapper(
       func: () async {
-        Database? db = _noSQLManager.getNoSqlDatabase().databases[name];
+        Database? db = await getDatabase(reference: name);
 
-        String? successMessage, errorMessage;
+        if (db == null) return false;
 
-        try {
-          if (db == null) {
-            errorMessage =
-                "Failed to delete $name database, database does not exists";
+        bool results = _noSQLManager.getNoSqlDatabase().updateDatabase(
+              database: db,
+              data: data,
+            );
 
-            log(errorMessage);
-            if (callback != null) callback(error: errorMessage);
-
-            return false;
-          }
-          bool results =
-              _noSQLManager.getNoSqlDatabase().removeDatabase(database: db);
-
-          if (results) {
-            successMessage = "$name database successfully deleted";
-            log(successMessage);
-            if (callback != null) callback(res: (results, successMessage));
-          } else {
-            errorMessage = "Failed to delete $name Database";
-            log(errorMessage);
-            if (callback != null) callback(error: errorMessage);
-          }
-        } catch (e) {
-          errorMessage = "Failed to delete $name database, error ocurred -> $e";
-          log(errorMessage);
-          if (callback != null) callback(error: errorMessage);
-          return false;
+        if (results) {
+          _streamWrapper.broadcastEventStream<Database>(
+            eventNotifier: EventNotifier(
+              event: EventType.update,
+              entityType: EntityType.database,
+              object: db,
+            ),
+          );
         }
 
-        return true;
+        return results;
+      },
+    );
+  }
+
+  Future<bool> removeDatabase({
+    required String name,
+  }) async {
+    return await _opMapper(
+      func: () async {
+        Database? db = await getDatabase(reference: name);
+
+        if (db == null) return false;
+
+        bool results = _noSQLManager.getNoSqlDatabase().removeDatabase(
+              database: db,
+            );
+
+        if (results) {
+          _streamWrapper.broadcastEventStream<Database>(
+            eventNotifier: EventNotifier(
+              event: EventType.remove,
+              entityType: EntityType.database,
+              object: db,
+            ),
+          );
+        }
+
+        return results;
       },
     );
   }
@@ -256,15 +209,11 @@ class NoSQLUtility extends Logging {
   Future<bool> setRestrictions({
     required String reference,
     required RestrictionBuilder builder,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
     return await _opMapper(
       func: () async {
         Collection? collection = await getCollection(
           reference: reference,
-          callback: (errorMsg) {
-            if (callback != null) callback(error: errorMsg);
-          },
         );
 
         if (collection == null) return false;
@@ -276,7 +225,6 @@ class NoSQLUtility extends Logging {
             .addRestriction(
               objectId: collection.objectId,
               restrictionBuilder: builder,
-              callback: callback,
             );
 
         return results;
@@ -288,15 +236,11 @@ class NoSQLUtility extends Logging {
     required String reference,
     List<String> fieldObjectKeys = const [],
     List<String> valueObjectKeys = const [],
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
     return await _opMapper(
       func: () async {
         Collection? collection = await getCollection(
           reference: reference,
-          callback: (errorMsg) {
-            if (callback != null) callback(error: errorMsg);
-          },
         );
 
         if (collection == null) return false;
@@ -307,7 +251,6 @@ class NoSQLUtility extends Logging {
           objectId: collection.objectId,
           fieldObjectKeys: fieldObjectKeys,
           valueObjectKeys: valueObjectKeys,
-          callback: callback,
         );
 
         return results;
@@ -317,14 +260,13 @@ class NoSQLUtility extends Logging {
 
   Future<bool> createCollection({
     required String reference,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
     return await _opMapper(
       func: () async {
+        reference = reference.toLowerCase();
+
         Database? database;
         String collectionName;
-
-        reference = reference.toLowerCase();
 
         if (reference.contains(".")) {
           database = await getDatabase(reference: reference.split(".")[0]);
@@ -334,21 +276,7 @@ class NoSQLUtility extends Logging {
           collectionName = reference;
         }
 
-        String? successMessage, errorMessage;
-
-        if (database == null) {
-          errorMessage = "Database with the reference $reference not found";
-          log(errorMessage);
-
-          if (callback != null) callback(error: errorMessage);
-          return false;
-        }
-
-        if (collectionName.isEmpty) {
-          errorMessage = "Collection name in the $reference can not be empty";
-          log(errorMessage);
-
-          if (callback != null) callback(error: errorMessage);
+        if (database == null || collectionName.isEmpty) {
           return false;
         }
 
@@ -360,14 +288,13 @@ class NoSQLUtility extends Logging {
         bool results = database.addCollection(collection: collection);
 
         if (results) {
-          successMessage = "Collection with the reference $reference added";
-          log(successMessage);
-          if (callback != null) callback(res: (results, successMessage));
-        } else {
-          errorMessage =
-              "Failed to add Collection with the reference $reference";
-          log(errorMessage);
-          if (callback != null) callback(error: errorMessage);
+          _streamWrapper.broadcastEventStream<Collection>(
+            eventNotifier: EventNotifier(
+              event: EventType.add,
+              entityType: EntityType.collection,
+              object: collection,
+            ),
+          );
         }
 
         return results;
@@ -377,7 +304,6 @@ class NoSQLUtility extends Logging {
 
   Future<Collection?> getCollection({
     required String reference,
-    void Function(String errorMsg)? callback,
   }) async {
     Database? database;
     Collection? collection;
@@ -385,20 +311,11 @@ class NoSQLUtility extends Logging {
     reference = reference.toLowerCase();
 
     if (reference.contains(".")) {
-      database =
-          _noSQLManager.getNoSqlDatabase().databases[reference.split(".")[0]];
+      database = await getDatabase(reference: reference);
       collection = database?.objects[reference.split(".")[1]];
     } else {
       database = _noSQLManager.getNoSqlDatabase().currentDatabase;
       collection = database?.objects[reference];
-    }
-
-    String? errorMessage;
-
-    if (collection == null) {
-      errorMessage = "Collection with the reference $reference not found";
-      log(errorMessage);
-      if (callback != null) callback(errorMessage);
     }
 
     return collection;
@@ -406,7 +323,6 @@ class NoSQLUtility extends Logging {
 
   Future<List<Collection>> getCollections({
     String? databaseName,
-    void Function(String errorMsg)? callback,
     bool Function(Database database)? query,
   }) async {
     Database? database;
@@ -414,38 +330,22 @@ class NoSQLUtility extends Logging {
     if (databaseName == null) {
       database = _noSQLManager.getNoSqlDatabase().currentDatabase;
     } else {
-      database = _noSQLManager
-          .getNoSqlDatabase()
-          .databases[databaseName.toLowerCase()];
+      database = await getDatabase(reference: databaseName);
     }
 
-    if (database == null) {
-      var msg =
-          "Database with the name $databaseName not found and current database is null";
-      if (callback != null) {
-        callback(
-          msg,
-        );
-      }
-      log(msg);
+    if (database == null) return [];
 
-      return [];
-    }
     return database.objects.values.toList();
   }
 
   Stream<List<Collection>> getCollectionStream({
     String? databaseName,
     bool Function(Collection collection)? query,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) async* {
     Database? database = databaseName == null
         ? _noSQLManager.getNoSqlDatabase().currentDatabase
         : await getDatabase(
             reference: databaseName,
-            callback: ({error, res}) {
-              if (callback != null) callback(error: error);
-            },
           );
 
     if (database == null) {
@@ -455,42 +355,30 @@ class NoSQLUtility extends Logging {
     }
   }
 
-  Future<bool> deleteCollection({
+  Future<bool> updateCollection({
     required String reference,
-    void Function({String? error, (bool res, String msg)? res})? callback,
+    required Map<String, dynamic> data,
   }) async {
     return await _opMapper(
       func: () async {
         Database? database = await getDatabase(reference: reference);
-
-        String? successMessage, errorMessage;
-
-        if (database == null) {
-          errorMessage = "Database with the reference $reference not found";
-          log(errorMessage);
-          if (callback != null) callback(error: errorMessage);
-          return false;
-        }
-
         Collection? collection = await getCollection(reference: reference);
 
-        if (collection == null) {
-          errorMessage = "Collection with the reference $reference not found";
-          if (callback != null) callback(error: errorMessage);
-          return false;
-        }
+        if (database == null || collection == null) return false;
 
-        bool results = database.removeCollection(collection: collection);
+        bool results = database.updateCollection(
+          collection: collection,
+          data: data,
+        );
 
         if (results) {
-          successMessage = "Collection with the reference $reference deleted";
-          log(successMessage);
-          if (callback != null) callback(res: (results, successMessage));
-        } else {
-          errorMessage =
-              "Failed to delete Collection with the reference $reference";
-          log(errorMessage);
-          if (callback != null) callback(error: errorMessage);
+          _streamWrapper.broadcastEventStream<Collection>(
+            eventNotifier: EventNotifier(
+              event: EventType.update,
+              entityType: EntityType.collection,
+              object: collection,
+            ),
+          );
         }
 
         return results;
@@ -498,27 +386,27 @@ class NoSQLUtility extends Logging {
     );
   }
 
-  Future<bool> insertDocument({
+  Future<bool> removeCollection({
     required String reference,
-    required Map<String, dynamic> data,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
     return await _opMapper(
       func: () async {
-        Collection? collection = await getCollection(
-          reference: reference,
-          callback: (errorMsg) {
-            if (callback != null) callback(error: errorMsg);
-          },
-        );
+        Database? database = await getDatabase(reference: reference);
+        Collection? collection = await getCollection(reference: reference);
 
-        if (collection == null) return false;
+        if (database == null || collection == null) return false;
 
-        bool results = _noSQLManager.insertDocumentProxy(
-          collection: collection,
-          data: data,
-          callback: callback,
-        );
+        bool results = database.removeCollection(collection: collection);
+
+        if (results) {
+          _streamWrapper.broadcastEventStream<Collection>(
+            eventNotifier: EventNotifier(
+              event: EventType.remove,
+              entityType: EntityType.collection,
+              object: collection,
+            ),
+          );
+        }
 
         return results;
       },
@@ -528,40 +416,21 @@ class NoSQLUtility extends Logging {
   Future<bool> insertDocuments({
     required String reference,
     required List<Map<String, dynamic>> data,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
     return await _opMapper(
       func: () async {
         Collection? collection = await getCollection(
           reference: reference,
-          callback: (errorMsg) {
-            if (callback != null) callback(error: errorMsg);
-          },
         );
 
         if (collection == null) return false;
 
         bool results = true;
 
-        List<Document> failedDocuments = [];
-
         results = _noSQLManager.insertDocumentsProxy(
           collection: collection,
           data: data,
-          callback: callback,
         );
-
-        if (!results) {
-          String errorMessage =
-              "failed to insert documents: ${failedDocuments.map(
-            (document) => document.toJson(
-              serialize: true,
-            ),
-          )}";
-          log(errorMessage);
-
-          if (callback != null) callback(error: errorMessage);
-        }
 
         return results;
       },
@@ -571,13 +440,9 @@ class NoSQLUtility extends Logging {
   Future<List<Document>> getDocuments({
     required String reference,
     bool Function(Document document)? query,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
     Collection? collection = await getCollection(
       reference: reference,
-      callback: (errorMsg) {
-        if (callback != null) callback(error: errorMsg);
-      },
     );
 
     if (collection == null) return [];
@@ -590,15 +455,11 @@ class NoSQLUtility extends Logging {
   Stream<List<Document>> getDocumentStream({
     required String reference,
     bool Function(Document document)? query,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) async* {
     reference = reference.toLowerCase();
 
     Collection? collection = await getCollection(
       reference: reference,
-      callback: (errorMsg) {
-        if (callback != null) callback(error: errorMsg);
-      },
     );
 
     if (collection == null) {
@@ -608,47 +469,15 @@ class NoSQLUtility extends Logging {
     }
   }
 
-  Future<bool> updateDocument({
-    required String reference,
-    required bool Function(Document document) query,
-    required Map<String, dynamic> data,
-    void Function({String? error, (bool res, String msg)? res})? callback,
-  }) async {
-    return await _opMapper(
-      func: () async {
-        Collection? collection = await getCollection(
-          reference: reference,
-          callback: (errorMsg) {
-            if (callback != null) callback(error: errorMsg);
-          },
-        );
-
-        if (collection == null) return false;
-
-        bool results = _noSQLManager.updateDocumentProxy(
-          collection: collection,
-          query: query,
-          data: data,
-          callback: callback,
-        );
-        return results;
-      },
-    );
-  }
-
   Future<bool> updateDocuments({
     required String reference,
     required bool Function(Document document) query,
     required Map<String, dynamic> data,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
     return await _opMapper(
       func: () async {
         Collection? collection = await getCollection(
           reference: reference,
-          callback: (errorMsg) {
-            if (callback != null) callback(error: errorMsg);
-          },
         );
 
         if (collection == null) return false;
@@ -657,53 +486,8 @@ class NoSQLUtility extends Logging {
           collection: collection,
           query: query,
           data: data,
-          callback: callback,
         );
         return results;
-      },
-    );
-  }
-
-  Future<bool> removeDocument({
-    required String reference,
-    required bool Function(Document document) query,
-    void Function({String? error, (bool res, String msg)? res})? callback,
-  }) async {
-    return await _opMapper(
-      func: () async {
-        Collection? collection = await getCollection(
-          reference: reference,
-          callback: (errorMsg) {
-            if (callback != null) callback(error: errorMsg);
-          },
-        );
-
-        if (collection == null) return false;
-
-        Document? document = collection.objects.values.where(query).firstOrNull;
-
-        if (document == null) {
-          if (callback != null) {
-            callback(error: "Document not found");
-          }
-          return false;
-        }
-
-        bool results = collection.removeDocument(document: document);
-
-        if (results) {
-          if (callback != null) {
-            callback(res: (true, "Document deleted"));
-          }
-        } else {
-          if (callback != null) {
-            callback(
-              error: "Failed to delete document $document",
-            );
-          }
-        }
-
-        return true;
       },
     );
   }
@@ -711,15 +495,11 @@ class NoSQLUtility extends Logging {
   Future<bool> removeDocuments({
     required String reference,
     required bool Function(Document document) query,
-    void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
     return await _opMapper(
       func: () async {
         Collection? collection = await getCollection(
           reference: reference,
-          callback: (errorMsg) {
-            if (callback != null) callback(error: errorMsg);
-          },
         );
 
         if (collection == null) return false;
@@ -728,29 +508,20 @@ class NoSQLUtility extends Logging {
 
         bool results = true;
 
-        List<Document> failedDocuments = [];
-
         for (var document in documents) {
           bool docRes = collection.removeDocument(document: document);
-
           if (!docRes) {
-            failedDocuments.add(document);
             results = false;
+            continue;
           }
-        }
-
-        if (!results) {
-          String errorMessage =
-              "Failed to delete documents: ${failedDocuments.map(
-            (document) => document.toJson(
-              serialize: true,
+          _streamWrapper.broadcastEventStream<Document>(
+            eventNotifier: EventNotifier(
+              event: EventType.remove,
+              entityType: EntityType.document,
+              object: document,
             ),
-          )}";
-          log(errorMessage);
-
-          if (callback != null) callback(error: errorMessage);
+          );
         }
-
         return results;
       },
     );

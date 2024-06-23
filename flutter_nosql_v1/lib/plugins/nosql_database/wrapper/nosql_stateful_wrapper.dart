@@ -5,18 +5,16 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/nosql_utilities.
 import 'package:permission_handler/permission_handler.dart';
 
 class NoSQlInitilizationObject {
-  String databasePath, loggerPath;
+  String databasePath;
   bool initializeFromDisk;
 
   NoSQlInitilizationObject({
     required this.initializeFromDisk,
     this.databasePath = "database.json",
-    this.loggerPath = "logger.json",
   });
 }
 
 class NoSQLStatefulWrapper extends StatefulWidget {
-  final NoSQlInitilizationObject initilizationObject;
   final Function({
     String? error,
     String? success,
@@ -25,12 +23,15 @@ class NoSQLStatefulWrapper extends StatefulWidget {
   final Widget body;
   final bool checkPermissions;
   final List<AppLifecycleState> commitStates;
+  final String databasePath;
+  final bool initializeFromDisk;
 
   const NoSQLStatefulWrapper({
     super.key,
-    required this.initilizationObject,
+    required this.initializeFromDisk,
     required this.checkPermissions,
     required this.body,
+    this.databasePath = "database.json",
     this.callback,
     this.commitStates = const [],
   });
@@ -42,7 +43,6 @@ class NoSQLStatefulWrapper extends StatefulWidget {
 class _NoSQLStatefulWrapperState extends State<NoSQLStatefulWrapper>
     with WidgetsBindingObserver {
   NoSQLUtility noSQLUtility = NoSQLUtility();
-  late NoSQlInitilizationObject initilizationObject;
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -50,8 +50,7 @@ class _NoSQLStatefulWrapperState extends State<NoSQLStatefulWrapper>
 
     if (widget.commitStates.contains(state)) {
       noSQLUtility.commitToDisk(
-        databasePath: initilizationObject.databasePath,
-        loggerPath: initilizationObject.loggerPath,
+        databasePath: widget.databasePath,
       );
     }
   }
@@ -60,9 +59,7 @@ class _NoSQLStatefulWrapperState extends State<NoSQLStatefulWrapper>
   void initState() {
     super.initState();
 
-    initilizationObject = widget.initilizationObject;
-
-    _checkPermissions();
+    if (widget.checkPermissions) _checkPermissions();
 
     WidgetsBinding.instance.addObserver(this);
   }
@@ -111,10 +108,9 @@ class _NoSQLStatefulWrapperState extends State<NoSQLStatefulWrapper>
                 await Permission.manageExternalStorage.request();
                 bool res = await _checkPermissions();
 
-                if (res && initilizationObject.initializeFromDisk) {
+                if (res && widget.initializeFromDisk) {
                   noSQLUtility.initialize(
-                    databasePath: initilizationObject.databasePath,
-                    loggerPath: initilizationObject.loggerPath,
+                    databasePath: widget.databasePath,
                   );
                 }
               },

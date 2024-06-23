@@ -1,6 +1,4 @@
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/base_component.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/entity_types.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/events.dart';
 
 class Document extends BaseComponent {
   EntityType type = EntityType.document;
@@ -39,14 +37,6 @@ class Document extends BaseComponent {
 
     broadcastObjectsChanges();
 
-    broadcastEventStream<Map<String, dynamic>>(
-      eventNotifier: EventNotifier(
-        event: EventType.add,
-        entityType: EntityType.map,
-        object: fields,
-      ),
-    );
-
     return results;
   }
 
@@ -64,14 +54,6 @@ class Document extends BaseComponent {
 
     fields.addAll(field);
     broadcastObjectsChanges();
-
-    broadcastEventStream<Map<String, dynamic>>(
-      eventNotifier: EventNotifier(
-        event: EventType.remove,
-        entityType: EntityType.map,
-        object: fields,
-      ),
-    );
 
     return results;
   }
@@ -91,22 +73,33 @@ class Document extends BaseComponent {
 
     broadcastObjectsChanges();
 
-    broadcastEventStream<Map<String, dynamic>>(
-      eventNotifier: EventNotifier(
-        event: EventType.remove,
-        entityType: EntityType.map,
-        object: fields,
-      ),
-    );
-
     return results;
   }
 
   @override
-  void update({required Map<String, dynamic> data}) {
-    fields = data;
+  bool update({required Map<String, dynamic> data}) {
+    var updateData = Map<String, dynamic>.from(data);
+    bool results = true;
+
+    for (var field in data.entries) {
+      var key = field.key;
+      var value = field.value;
+
+      if (key.toLowerCase() == "!unset") {
+        updateData.remove(key);
+
+        if (value.runtimeType == List<String>) {
+          if (results) results = removeField(keys: value);
+        } else {
+          throw "!unset key expects value with the runtime type List<String> not ${value.runtimeType} ($value)";
+        }
+      }
+    }
+    fields.addAll(updateData);
 
     broadcastObjectsChanges();
+
+    return results;
   }
 
   @override

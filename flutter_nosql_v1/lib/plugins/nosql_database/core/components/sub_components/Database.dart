@@ -1,6 +1,4 @@
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/base_component.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/entity_types.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/events.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/collection.dart';
 
 class Database extends BaseComponent<Database, Collection> {
@@ -69,14 +67,6 @@ class Database extends BaseComponent<Database, Collection> {
     objects.addAll({name: collection});
     broadcastObjectsChanges();
 
-    broadcastEventStream<Collection>(
-      eventNotifier: EventNotifier(
-        event: EventType.add,
-        entityType: EntityType.collection,
-        object: collection,
-      ),
-    );
-
     return results;
   }
 
@@ -92,16 +82,23 @@ class Database extends BaseComponent<Database, Collection> {
       return false;
     }
 
-    object.update(data: data);
-    broadcastObjectsChanges();
+    var updateName = data["name"];
+    if (updateName != null) {
+      var isKey = objects.containsKey(updateName);
 
-    broadcastEventStream<Collection>(
-      eventNotifier: EventNotifier(
-        event: EventType.update,
-        entityType: EntityType.collection,
-        object: collection,
-      ),
-    );
+      if (isKey) {
+        if (objects[updateName] != collection) {
+          return false;
+        }
+      } else {
+        objects[updateName] = collection;
+        objects.remove(name);
+      }
+    }
+
+    object.update(data: data);
+
+    broadcastObjectsChanges();
 
     return results;
   }
@@ -119,46 +116,26 @@ class Database extends BaseComponent<Database, Collection> {
     }
     broadcastObjectsChanges();
 
-    broadcastEventStream<Collection>(
-      eventNotifier: EventNotifier(
-        event: EventType.remove,
-        entityType: EntityType.collection,
-        object: collection,
-      ),
-    );
-
     return results;
   }
 
   @override
-  void update({required Map<String, dynamic> data}) {
-    // var updateName = data["name"];
+  bool update({required Map<String, dynamic> data}) {
+    var updateName = data["name"];
+    if (updateName != null) {
+      name = "$updateName".toLowerCase();
+    }
 
-    // if (updateName != null) {
-    //   name = "$updateName".toLowerCase();
-    // }
+    return true;
   }
 
   @override
   Map<String, dynamic> toJson({required bool serialize}) {
-    Map<String, Map> collectionEntries = {};
-
-    objects.forEach(
-      (key, value) {
-        collectionEntries.addAll(
-          {
-            key: value.toJson(serialize: serialize),
-          },
-        );
-      },
-    );
-
     return super.toJson(serialize: serialize)
       ..addAll(
         {
           "name": name,
           "type": serialize ? type.toString() : type,
-          "objects": serialize ? collectionEntries : objects,
         },
       );
   }

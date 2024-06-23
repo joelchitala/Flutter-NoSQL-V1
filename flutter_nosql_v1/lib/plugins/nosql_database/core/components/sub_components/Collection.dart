@@ -1,6 +1,4 @@
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/base_component.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/entity_types.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/events.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/document.dart';
 
 class Collection extends BaseComponent<Collection, Document> {
@@ -69,14 +67,6 @@ class Collection extends BaseComponent<Collection, Document> {
 
     broadcastObjectsChanges();
 
-    broadcastEventStream<Document>(
-      eventNotifier: EventNotifier(
-        event: EventType.add,
-        entityType: EntityType.document,
-        object: document,
-      ),
-    );
-
     return results;
   }
 
@@ -95,13 +85,6 @@ class Collection extends BaseComponent<Collection, Document> {
     object.update(data: data);
 
     broadcastObjectsChanges();
-    broadcastEventStream<Document>(
-      eventNotifier: EventNotifier(
-        event: EventType.update,
-        entityType: EntityType.document,
-        object: document,
-      ),
-    );
 
     return results;
   }
@@ -118,42 +101,24 @@ class Collection extends BaseComponent<Collection, Document> {
     }
 
     broadcastObjectsChanges();
-    broadcastEventStream<Document>(
-      eventNotifier: EventNotifier(
-        event: EventType.remove,
-        entityType: EntityType.document,
-        object: document,
-      ),
-    );
 
     return results;
   }
 
   @override
-  void update({required Map<String, dynamic> data}) {
+  bool update({required Map<String, dynamic> data}) {
     name = data["name"] ?? name;
+
+    return true;
   }
 
   @override
   Map<String, dynamic> toJson({required bool serialize}) {
-    Map<String, Map> documentEntries = {};
-
-    objects.forEach(
-      (key, value) {
-        documentEntries.addAll(
-          {
-            key: value.toJson(serialize: serialize),
-          },
-        );
-      },
-    );
-
     return super.toJson(serialize: serialize)
       ..addAll(
         {
           "name": name,
           "type": serialize ? type.toString() : type,
-          "objects": serialize ? documentEntries : objects,
         },
       );
   }

@@ -1,128 +1,70 @@
 import 'dart:async';
 
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/entity_types.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/events.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/collection.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/base_component.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/database.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/nosql_meta_manager.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/utils.dart';
 
-class NoSQLDatabase {
+class NoSQLDatabase extends BaseComponent<NoSQLDatabase, Database> {
   final double _version = 1.0;
   NoSqlMetaManager metaManger = NoSqlMetaManager();
-  final EventStream _eventStream = EventStream();
-
-  DateTime _timestamp = DateTime.now();
 
   final _streamController = StreamController<List<Database>>.broadcast();
-  Map<String, Database> databases = {};
+  // Map<String, Database> objects = {};
   Database? currentDatabase;
   bool inMemoryOnlyMode;
 
   NoSQLDatabase({
+    required super.objectId,
     this.inMemoryOnlyMode = false,
-  }) {
-    _eventStream.eventStream.listen(
-      (event) {
-        switch (event.event) {
-          case EventType.add:
-            break;
-          case EventType.update:
-            break;
-          case EventType.remove:
-            if (event.entityType == EntityType.collection) {
-              var obj = event.object as Collection;
-              metaManger.metaRestrictionObject.removeCollectionRestriction(
-                objectId: obj.objectId,
-              );
-            }
-            break;
-          default:
-        }
-      },
-    );
-  }
-
-  NoSQLDatabase? noSQLDatabaseCopy() {
-    try {
-      NoSQLDatabase noSQLDatabase = NoSQLDatabase();
-
-      noSQLDatabase.setDatabase(
-        Map<String, dynamic>.from(
-          toJson(serialize: false),
-        ),
-      );
-
-      // var mp_1 = toJson(serialize: false);
-      // var mp_2 = Map<String, dynamic>.from(
-      //   toJson(serialize: false),
-      // );
-
-      // print(mp_1 == mp_2);
-      // print(this.databases == noSQLDatabase.databases);
-      // print("");
-
-      return noSQLDatabase;
-    } catch (_) {}
-
-    return null;
-  }
-
+  });
   factory NoSQLDatabase.copy({
     required NoSQLDatabase initialDB,
-    void Function(bool res)? callback,
   }) {
-    NoSQLDatabase noSQLDatabase = NoSQLDatabase();
-    try {
-      noSQLDatabase.initialize(data: initialDB.toJson(serialize: true));
-    } catch (_) {
-      if (callback != null) callback(false);
-    }
+    NoSQLDatabase noSQLDatabase = NoSQLDatabase(
+      objectId: generateUUID(),
+    );
+    noSQLDatabase.initialize(data: initialDB.toJson(serialize: true));
     return noSQLDatabase;
   }
 
   void setDatabase(Map<String, dynamic> data) {
     inMemoryOnlyMode = data["inMemoryOnlyMode"] ?? inMemoryOnlyMode;
-    databases = data["databases"] == null
-        ? databases
-        : Map<String, Database>.from(data["databases"]);
+    objects = data["objects"] == null
+        ? objects
+        : Map<String, Database>.from(data["objects"]);
 
     metaManger = data["metaManger"] ?? metaManger;
   }
 
   void initialize({required Map<String, dynamic> data}) {
-    try {
-      if (inMemoryOnlyMode) {
-        return;
-      }
+    if (inMemoryOnlyMode) {
+      return;
+    }
 
-      _timestamp = DateTime.tryParse("${data["_timestamp"]}") ?? _timestamp;
+    Map<String, dynamic>? jsonDatabases = data["objects"];
 
-      Map<String, dynamic>? jsonDatabases = data["databases"];
+    jsonDatabases?.forEach(
+      (key, value) {
+        objects.addAll(
+          {
+            key: Database.fromJson(data: value),
+          },
+        );
+      },
+    );
 
-      jsonDatabases?.forEach(
-        (key, value) {
-          databases.addAll(
-            {
-              key: Database.fromJson(data: value),
-            },
-          );
-        },
-      );
+    Map<String, dynamic>? jsonMetaManager = data["metaManger"];
 
-      Map<String, dynamic>? jsonMetaManager = data["metaManger"];
-
-      if (jsonMetaManager != null) {
-        metaManger.initialize(data: jsonMetaManager);
-      }
-    } catch (e) {
-      rethrow;
+    if (jsonMetaManager != null) {
+      metaManger.initialize(data: jsonMetaManager);
     }
   }
 
   Stream<List<Database>> stream({bool Function(Database database)? query}) {
     if (query != null) {
-      return _streamController.stream.map((databases) {
-        return databases.where(query).toList();
+      return _streamController.stream.map((objects) {
+        return objects.where(query).toList();
       });
     }
 
@@ -130,7 +72,7 @@ class NoSQLDatabase {
   }
 
   void _broadcastChanges() {
-    _streamController.add(List<Database>.from(databases.values.toList()));
+    _streamController.add(List<Database>.from(objects.values.toList()));
   }
 
   void dispose() {
@@ -143,20 +85,12 @@ class NoSQLDatabase {
     bool results = true;
     var name = database.name.toLowerCase();
 
-    if (databases.containsKey(name)) {
+    if (objects.containsKey(name)) {
       return false;
     }
 
-    databases.addAll({name: database});
+    objects.addAll({name: database});
     _broadcastChanges();
-
-    _eventStream.broadcastEventStream<Database>(
-      eventNotifier: EventNotifier(
-        event: EventType.add,
-        entityType: EntityType.database,
-        object: database,
-      ),
-    );
 
     return results;
   }
@@ -168,22 +102,28 @@ class NoSQLDatabase {
     bool results = true;
 
     var name = database.name.toLowerCase();
-    var object = databases[name];
+    var object = objects[name];
 
     if (object == null) {
       return false;
     }
 
+    var updateName = data["name"];
+    if (updateName != null) {
+      var isKey = objects.containsKey(updateName);
+
+      if (isKey) {
+        if (objects[updateName] != database) {
+          return false;
+        }
+      } else {
+        objects[updateName] = database;
+        objects.remove(name);
+      }
+    }
+
     object.update(data: data);
     _broadcastChanges();
-
-    _eventStream.broadcastEventStream<Database>(
-      eventNotifier: EventNotifier(
-        event: EventType.update,
-        entityType: EntityType.database,
-        object: database,
-      ),
-    );
 
     return results;
   }
@@ -194,28 +134,21 @@ class NoSQLDatabase {
     bool results = true;
 
     var name = database.name.toLowerCase();
-    var object = databases.remove(name);
+    var object = objects.remove(name);
 
     if (object == null) {
       return false;
     }
     _broadcastChanges();
 
-    _eventStream.broadcastEventStream<Database>(
-      eventNotifier: EventNotifier(
-        event: EventType.remove,
-        entityType: EntityType.database,
-        object: database,
-      ),
-    );
-
     return results;
   }
 
+  @override
   Map<String, dynamic> toJson({required bool serialize}) {
     Map<String, Map> databaseEntries = {};
 
-    databases.forEach(
+    objects.forEach(
       (key, value) {
         databaseEntries.addAll(
           {
@@ -225,16 +158,23 @@ class NoSQLDatabase {
       },
     );
 
-    return {
-      "version": _version,
-      "_timestamp": serialize ? _timestamp.toIso8601String() : _timestamp,
-      "inMemoryOnlyMode": inMemoryOnlyMode,
-      "databases": serialize ? databaseEntries : databases,
-      "metaManger": serialize
-          ? metaManger.toJson(
-              serialize: serialize,
-            )
-          : metaManger,
-    };
+    return super.toJson(serialize: serialize)
+      ..addAll(
+        {
+          "version": _version,
+          "inMemoryOnlyMode": inMemoryOnlyMode,
+          "objects": serialize ? databaseEntries : objects,
+          "metaManger": serialize
+              ? metaManger.toJson(
+                  serialize: serialize,
+                )
+              : metaManger,
+        },
+      );
+  }
+
+  @override
+  bool update({required Map<String, dynamic> data}) {
+    return true;
   }
 }

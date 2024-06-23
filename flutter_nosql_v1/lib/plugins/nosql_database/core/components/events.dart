@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/entity_types.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/base_component.dart';
 
 enum EventType {
   add,
@@ -19,6 +19,7 @@ class EventNotifier<T> {
   EventType event;
   T object;
   EntityType entityType;
+  String? message;
 
   EventNotifier({
     required this.event,
@@ -28,7 +29,7 @@ class EventNotifier<T> {
 
   @override
   String toString() =>
-      'Event: $event, EntityType: $entityType, Object: $object';
+      'Event: $event, EntityType: $entityType, Object: $object, Message: $message';
 }
 
 class EventStream {

@@ -97,8 +97,9 @@ class RestrictionFieldObject {
     this.caseSensitive = false,
   });
 
-  factory RestrictionFieldObject.fromJson(
-      {required Map<String, dynamic> data}) {
+  factory RestrictionFieldObject.fromJson({
+    required Map<String, dynamic> data,
+  }) {
     return RestrictionFieldObject(
       objectId: data["objectId"],
       key: data["key"],
@@ -116,7 +117,6 @@ class RestrictionFieldObject {
     required Map<String, dynamic> json,
     List<Map<String, dynamic>>? dataList,
     String? specificKey,
-    Function(String? error)? callback,
   }) {
     var data = json[key];
 
@@ -129,11 +129,6 @@ class RestrictionFieldObject {
       bool res = ((runtimeType == expectedRuntimeType) ||
           (expectedType == dynamic.toString()));
 
-      if (callback != null && !res) {
-        callback(
-          "Runtime type of $data in $json is not valid. Expected runtime type $expectedRuntimeType",
-        );
-      }
       return res;
     }
 
@@ -149,12 +144,6 @@ class RestrictionFieldObject {
       }).firstOrNull;
 
       bool res = obj == null ? true : false;
-
-      if (callback != null && obj != null) {
-        callback(
-          "The data {$key:$data} in $json provided is not unique. Conflict found in $obj",
-        );
-      }
 
       return res;
     }
@@ -236,7 +225,6 @@ class RestrictionValueObject {
 
   bool validate({
     required Map<String, dynamic> json,
-    Function(String? error)? callback,
   }) {
     var data = json[key];
 
@@ -262,20 +250,11 @@ class RestrictionValueObject {
           if (data == expectedValue) return true;
         }
 
-        if (callback != null) {
-          callback(
-            "Data $data provided does not equal any expected value in $expectedValues",
-          );
-        }
         return false;
       case RestrictionValueTypes.inveq:
         for (var expectedValue in cleanedList) {
           if (data == expectedValue) {
-            if (callback != null) {
-              callback(
-                "Data $data provided equals any expected value in $expectedValues, ($expectedValue)",
-              );
-            }
+            return false;
           }
         }
         return true;
@@ -284,20 +263,10 @@ class RestrictionValueObject {
           if (data > expectedValue) return true;
         }
 
-        if (callback != null) {
-          callback(
-            "Data $data provided does not greater than any of the expected value $expectedValues",
-          );
-        }
         return false;
       case RestrictionValueTypes.lt:
         for (var expectedValue in cleanedList) {
           if (data >= expectedValue) {
-            if (callback != null) {
-              callback(
-                "Data $data provided is not less than $expectedValue in $expectedValues",
-              );
-            }
             return false;
           }
         }
@@ -308,20 +277,10 @@ class RestrictionValueObject {
           if (data >= expectedValue) return true;
         }
 
-        if (callback != null) {
-          callback(
-            "Data $data provided does not greater than or equals to any of the expected value $expectedValues",
-          );
-        }
         return false;
       case RestrictionValueTypes.eqlt:
         for (var expectedValue in cleanedList) {
           if (data > expectedValue) {
-            if (callback != null) {
-              callback(
-                "Data $data provided is greater than $expectedValue in $expectedValues",
-              );
-            }
             return false;
           }
         }
@@ -337,12 +296,6 @@ class RestrictionValueObject {
           if ((data > expectedValue1) && (data < expectedValue2)) return true;
         }
 
-        if (callback != null) {
-          callback(
-            "Data $data provided is not in range of $pairs",
-          );
-        }
-
         return false;
       case RestrictionValueTypes.invrange:
         var pairs = _arrayPairer(cleanedList);
@@ -352,11 +305,6 @@ class RestrictionValueObject {
           var expectedValue2 = pair[1];
 
           if ((data > expectedValue1) && (data < expectedValue2)) {
-            if (callback != null) {
-              callback(
-                "Data $data provided is in range of $pairs, between ($expectedValue1) and ($expectedValue2)",
-              );
-            }
             return false;
           }
         }
@@ -372,12 +320,6 @@ class RestrictionValueObject {
           if ((data >= expectedValue1) && (data <= expectedValue2)) return true;
         }
 
-        if (callback != null) {
-          callback(
-            "Data $data provided is not in range and does not equal any endpoints of $pairs",
-          );
-        }
-
         return false;
       case RestrictionValueTypes.inveqrange:
         var pairs = _arrayPairer(cleanedList);
@@ -387,11 +329,6 @@ class RestrictionValueObject {
           var expectedValue2 = pair[1];
 
           if ((data >= expectedValue1) && (data <= expectedValue2)) {
-            if (callback != null) {
-              callback(
-                "Data $data provided is in range of or equals any of the endpoints of $pairs, between ($expectedValue1) and ($expectedValue2)",
-              );
-            }
             return false;
           }
         }

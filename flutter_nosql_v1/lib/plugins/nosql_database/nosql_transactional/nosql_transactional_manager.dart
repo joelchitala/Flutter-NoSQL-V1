@@ -1,9 +1,8 @@
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/nosql_database.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/nosql_manager.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_transactional/nosql_transactional.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/logger.dart';
 
-class NoSQLTransactionalManager extends Logging {
+class NoSQLTransactionalManager {
   NoSQLTransactional? _currentTransactional;
 
   final NoSQLManager _noSqlManager = NoSQLManager();
@@ -22,16 +21,9 @@ class NoSQLTransactionalManager extends Logging {
       if (_currentTransactional == null) {
         _currentTransactional = noSQLTransactional;
 
-        bool results = true;
-
         var db = NoSQLDatabase.copy(
           initialDB: _noSqlManager.getNoSqlDatabase(),
-          callback: (res) {
-            results = res;
-          },
         );
-
-        if (!results) return -1;
 
         setDatabase(db);
 
@@ -39,9 +31,7 @@ class NoSQLTransactionalManager extends Logging {
       }
 
       return 0;
-    } catch (e) {
-      log("Error $e occured in mounting nosql transactional");
-    }
+    } catch (_) {}
     return -1;
   }
 

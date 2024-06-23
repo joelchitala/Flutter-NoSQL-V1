@@ -45,19 +45,13 @@ class NoSQLTransactional {
   Future<bool> execute() async {
     bool results = true;
 
-    try {
-      int res = await mount();
+    int res = await mount();
 
-      if (res == -1) return false;
+    if (res == -1) return false;
 
-      await _executeFunction();
+    await _executeFunction();
 
-      results = _executionResults;
-
-      await unmount();
-    } catch (e) {
-      throw "Transactional Error $e occured";
-    }
+    results = _executionResults;
 
     await unmount();
 
