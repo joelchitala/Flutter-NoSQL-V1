@@ -138,6 +138,8 @@ class NoSQLUtility extends Logging {
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
     return await _opMapper(func: () async {
+      name = name.toLowerCase();
+
       Database? db = _noSQLManager.getNoSqlDatabase().databases[name];
       String? successMessage, errorMessage;
 
@@ -178,12 +180,13 @@ class NoSQLUtility extends Logging {
     required String reference,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    String name = reference;
+    String name = reference.toLowerCase();
 
     if (reference.contains(".")) {
       name = reference.split(".")[0];
     }
-    Database? db = _noSQLManager.getNoSqlDatabase().databases[name];
+    Database? db =
+        _noSQLManager.getNoSqlDatabase().databases[name.toLowerCase()];
     return db;
   }
 
@@ -321,6 +324,8 @@ class NoSQLUtility extends Logging {
         Database? database;
         String collectionName;
 
+        reference = reference.toLowerCase();
+
         if (reference.contains(".")) {
           database = await getDatabase(reference: reference.split(".")[0]);
           collectionName = reference.split(".")[1];
@@ -377,6 +382,8 @@ class NoSQLUtility extends Logging {
     Database? database;
     Collection? collection;
 
+    reference = reference.toLowerCase();
+
     if (reference.contains(".")) {
       database =
           _noSQLManager.getNoSqlDatabase().databases[reference.split(".")[0]];
@@ -407,7 +414,9 @@ class NoSQLUtility extends Logging {
     if (databaseName == null) {
       database = _noSQLManager.getNoSqlDatabase().currentDatabase;
     } else {
-      database = _noSQLManager.getNoSqlDatabase().databases[databaseName];
+      database = _noSQLManager
+          .getNoSqlDatabase()
+          .databases[databaseName.toLowerCase()];
     }
 
     if (database == null) {
@@ -419,6 +428,7 @@ class NoSQLUtility extends Logging {
         );
       }
       log(msg);
+
       return [];
     }
     return database.objects.values.toList();
@@ -438,9 +448,11 @@ class NoSQLUtility extends Logging {
             },
           );
 
-    if (database == null) yield* Stream<List<Collection>>.value([]);
-
-    yield* database!.stream(query: query);
+    if (database == null) {
+      yield* Stream<List<Collection>>.value([]);
+    } else {
+      yield* database.stream(query: query);
+    }
   }
 
   Future<bool> deleteCollection({
@@ -580,6 +592,8 @@ class NoSQLUtility extends Logging {
     bool Function(Document document)? query,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async* {
+    reference = reference.toLowerCase();
+
     Collection? collection = await getCollection(
       reference: reference,
       callback: (errorMsg) {
@@ -587,9 +601,11 @@ class NoSQLUtility extends Logging {
       },
     );
 
-    if (collection == null) yield* Stream<List<Document>>.value([]);
-
-    yield* collection!.stream(query: query);
+    if (collection == null) {
+      yield* Stream<List<Document>>.value([]);
+    } else {
+      yield* collection.stream(query: query);
+    }
   }
 
   Future<bool> updateDocument({
