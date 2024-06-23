@@ -21,9 +21,17 @@ class NoSQLTransactionalManager extends Logging {
     try {
       if (_currentTransactional == null) {
         _currentTransactional = noSQLTransactional;
-        var db = _noSqlManager.noSQLDatabase.noSQLDatabaseCopy();
 
-        if (db == null) return -1;
+        bool results = true;
+
+        var db = NoSQLDatabase.copy(
+          initialDB: _noSqlManager.noSQLDatabase,
+          callback: (res) {
+            results = res;
+          },
+        );
+
+        if (!results) return -1;
 
         setDatabase(db);
 
@@ -46,10 +54,10 @@ class NoSQLTransactionalManager extends Logging {
     return 0;
   }
 
-  Future<void> commit(NoSQLDatabase noSQLDatabase) async {
-    if (_noSqlManager.noSQLDatabase == noSQLDatabase) {
+  Future<void> commit(NoSQLDatabase db) async {
+    if (_noSqlManager.noSQLDatabase == db) {
       return;
     }
-    _noSqlManager.noSQLDatabase = noSQLDatabase;
+    _noSqlManager.setNoSqlDatabase(db);
   }
 }

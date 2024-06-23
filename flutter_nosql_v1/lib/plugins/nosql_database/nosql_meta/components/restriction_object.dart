@@ -58,16 +58,16 @@ RestrictionFieldTypes? toRestrictionFieldTypes(String type) {
 }
 
 enum RestrictionValueTypes {
-  valueRestrictionEQ,
-  valueRestrictionINVEQ,
-  valueRestrictionGT,
-  valueRestrictionLT,
-  valueRestrictionEQGT,
-  valueRestrictionEQLT,
-  valueRestrictionRANGE,
-  valueRestrictionINVRANGE,
-  valueRestrictionEQRANGE,
-  valueRestrictionINVEQRANGE,
+  eq,
+  inveq,
+  gt,
+  lt,
+  eqgt,
+  eqlt,
+  range,
+  invrange,
+  eqrange,
+  inveqrange,
 }
 
 RestrictionValueTypes? toRestrictionValueTypes(String type) {
@@ -207,7 +207,7 @@ class RestrictionValueObject {
       restrictionType: toRestrictionValueTypes(
             data["restrictionType"],
           ) ??
-          RestrictionValueTypes.valueRestrictionEQ,
+          RestrictionValueTypes.eq,
       expectedValues: data["expectedValues"],
       caseSensitive: data["caseSensitive"],
     );
@@ -236,37 +236,37 @@ class RestrictionValueObject {
     }
 
     switch (restrictionType) {
-      case RestrictionValueTypes.valueRestrictionEQ:
+      case RestrictionValueTypes.eq:
         for (var expectedValue in cleanedList) {
           if (data == expectedValue) return true;
         }
         return false;
-      case RestrictionValueTypes.valueRestrictionINVEQ:
+      case RestrictionValueTypes.inveq:
         for (var expectedValue in cleanedList) {
           if (data == expectedValue) return false;
         }
         return true;
-      case RestrictionValueTypes.valueRestrictionGT:
+      case RestrictionValueTypes.gt:
         for (var expectedValue in cleanedList) {
           if (data > expectedValue) return true;
         }
         return false;
-      case RestrictionValueTypes.valueRestrictionLT:
+      case RestrictionValueTypes.lt:
         for (var expectedValue in cleanedList) {
           if (data >= expectedValue) return false;
         }
         return true;
-      case RestrictionValueTypes.valueRestrictionEQGT:
+      case RestrictionValueTypes.eqgt:
         for (var expectedValue in cleanedList) {
           if (data >= expectedValue) return true;
         }
         return false;
-      case RestrictionValueTypes.valueRestrictionEQLT:
+      case RestrictionValueTypes.eqlt:
         for (var expectedValue in cleanedList) {
           if (data > expectedValue) return false;
         }
         return true;
-      case RestrictionValueTypes.valueRestrictionRANGE:
+      case RestrictionValueTypes.range:
         var pairs = _arrayPairer(cleanedList);
 
         for (var pair in pairs) {
@@ -277,7 +277,7 @@ class RestrictionValueObject {
         }
 
         return false;
-      case RestrictionValueTypes.valueRestrictionINVRANGE:
+      case RestrictionValueTypes.invrange:
         var pairs = _arrayPairer(cleanedList);
 
         for (var pair in pairs) {
@@ -288,7 +288,7 @@ class RestrictionValueObject {
         }
 
         return true;
-      case RestrictionValueTypes.valueRestrictionEQRANGE:
+      case RestrictionValueTypes.eqrange:
         var pairs = _arrayPairer(cleanedList);
 
         for (var pair in pairs) {
@@ -299,7 +299,7 @@ class RestrictionValueObject {
         }
 
         return false;
-      case RestrictionValueTypes.valueRestrictionINVEQRANGE:
+      case RestrictionValueTypes.inveqrange:
         var pairs = _arrayPairer(cleanedList);
 
         for (var pair in pairs) {
@@ -378,7 +378,7 @@ class RestrictionBuilder {
       if (callback != null) {
         callback(
           error:
-              "Failed to add value restricton. Vield restriction with the key ${object.key} already exists",
+              "Failed to add value restricton. Value restriction with the key ${object.key} already exists",
         );
       }
       return false;
@@ -456,7 +456,7 @@ class RestrictionBuilder {
     required String key,
     required List expectedValues,
     bool caseSensitive = false,
-    RestrictionValueTypes type = RestrictionValueTypes.valueRestrictionEQ,
+    RestrictionValueTypes type = RestrictionValueTypes.eq,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) {
     addValueObject(

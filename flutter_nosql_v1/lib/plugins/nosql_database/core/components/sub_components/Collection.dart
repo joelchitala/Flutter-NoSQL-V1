@@ -4,10 +4,8 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/events.d
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/document.dart';
 
 class Collection extends BaseComponent<Collection, Document> {
-  // final _streamController = StreamController<List<Document>>.broadcast();
   String name;
   EntityType type = EntityType.collection;
-  // Map<String, Document> objects = {};
 
   Collection({
     required super.objectId,
@@ -57,24 +55,6 @@ class Collection extends BaseComponent<Collection, Document> {
 
     return collection;
   }
-
-  // Stream<List<Document>> stream({bool Function(Document document)? query}) {
-  //   if (query != null) {
-  //     return _streamController.stream.map((objects) {
-  //       return objects.where(query).toList();
-  //     });
-  //   }
-
-  //   return _streamController.stream;
-  // }
-
-  // void _broadcastChanges() {
-  //   _streamController.add(List<Document>.from(objects.values.toList()));
-  // }
-
-  // void dispose() {
-  //   _streamController.close();
-  // }
 
   bool addDocument({
     required Document document,

@@ -7,6 +7,10 @@ class NoSqlMetaManager {
   NoSqlMetaRestrictionObject get metaRestrictionObject =>
       _metaRestrictionObject;
 
+  // NoSqlMetaManager._();
+  // static final _instance = NoSqlMetaManager._();
+  // factory NoSqlMetaManager() => _instance;
+
   Map<String, dynamic> toJson({
     required bool serialize,
   }) {

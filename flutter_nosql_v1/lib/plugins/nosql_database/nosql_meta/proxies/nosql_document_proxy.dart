@@ -1,18 +1,20 @@
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/collection.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/document.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/nosql_manager.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/components/restriction_object.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/nosql_meta_manager.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/utils.dart';
 
 mixin NoSqlDocumentProxy {
-  final NoSqlMetaManager _metaManager = NoSqlMetaManager();
-
   RestrictionBuilder? getFieldObjectsByCollection({
     required Collection collection,
   }) {
-    return _metaManager.metaRestrictionObject.getRestrictionBuilder(
-      objectId: collection.objectId,
-    );
+    return NoSQLManager()
+        .noSQLDatabase
+        .metaManger
+        .metaRestrictionObject
+        .getRestrictionBuilder(
+          objectId: collection.objectId,
+        );
   }
 
   List<Map<String, dynamic>> generateDocumentList({

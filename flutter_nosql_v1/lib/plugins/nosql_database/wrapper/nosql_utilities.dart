@@ -3,20 +3,19 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_comp
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/document.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/nosql_manager.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/components/restriction_object.dart';
-import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/proxies/nosql_document_proxy.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_transactional/nosql_transactional.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/fileoperations.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/utilities/utils.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/wrapper/logger.dart';
 
-class NoSQLUtility extends Logging with NoSqlDocumentProxy {
+class NoSQLUtility extends Logging {
   final NoSQLManager _noSQLManager = NoSQLManager();
 
   late final Future<bool> Function({required Future<bool> Function() func})
-      opMapper;
+      _opMapper;
 
   NoSQLUtility() {
-    opMapper = _noSQLManager.opMapper;
+    _opMapper = _noSQLManager.opMapper;
   }
 
   Future<bool> clean({
@@ -138,7 +137,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
     required String name,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    return await opMapper(func: () async {
+    return await _opMapper(func: () async {
       Database? db = _noSQLManager.getNoSqlDatabase().databases[name];
       String? successMessage, errorMessage;
 
@@ -211,7 +210,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
     required String name,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    return await opMapper(
+    return await _opMapper(
       func: () async {
         Database? db = _noSQLManager.getNoSqlDatabase().databases[name];
 
@@ -256,7 +255,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
     required RestrictionBuilder builder,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    return await opMapper(
+    return await _opMapper(
       func: () async {
         Collection? collection = await getCollection(
           reference: reference,
@@ -267,13 +266,15 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
 
         if (collection == null) return false;
 
-        var metaManger = _noSQLManager.getNoSqlDatabase().metaManger;
-
-        bool results = metaManger.metaRestrictionObject.addRestriction(
-          objectId: collection.objectId,
-          restrictionBuilder: builder,
-          callback: callback,
-        );
+        bool results = _noSQLManager
+            .getNoSqlDatabase()
+            .metaManger
+            .metaRestrictionObject
+            .addRestriction(
+              objectId: collection.objectId,
+              restrictionBuilder: builder,
+              callback: callback,
+            );
 
         return results;
       },
@@ -286,7 +287,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
     List<String> valueObjectKeys = const [],
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    return await opMapper(
+    return await _opMapper(
       func: () async {
         Collection? collection = await getCollection(
           reference: reference,
@@ -315,7 +316,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
     required String reference,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    return await opMapper(
+    return await _opMapper(
       func: () async {
         Database? database;
         String collectionName;
@@ -446,7 +447,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
     required String reference,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    return await opMapper(
+    return await _opMapper(
       func: () async {
         Database? database = await getDatabase(reference: reference);
 
@@ -490,7 +491,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
     required Map<String, dynamic> data,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    return await opMapper(
+    return await _opMapper(
       func: () async {
         Collection? collection = await getCollection(
           reference: reference,
@@ -501,7 +502,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
 
         if (collection == null) return false;
 
-        bool results = insertDocumentProxy(
+        bool results = _noSQLManager.insertDocumentProxy(
           collection: collection,
           data: data,
           callback: callback,
@@ -517,7 +518,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
     required List<Map<String, dynamic>> data,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    return await opMapper(
+    return await _opMapper(
       func: () async {
         Collection? collection = await getCollection(
           reference: reference,
@@ -532,7 +533,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
 
         List<Document> failedDocuments = [];
 
-        results = insertDocumentsProxy(
+        results = _noSQLManager.insertDocumentsProxy(
           collection: collection,
           data: data,
           callback: callback,
@@ -597,7 +598,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
     required Map<String, dynamic> data,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    return await opMapper(
+    return await _opMapper(
       func: () async {
         Collection? collection = await getCollection(
           reference: reference,
@@ -608,7 +609,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
 
         if (collection == null) return false;
 
-        bool results = updateDocumentProxy(
+        bool results = _noSQLManager.updateDocumentProxy(
           collection: collection,
           query: query,
           data: data,
@@ -625,7 +626,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
     required Map<String, dynamic> data,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    return await opMapper(
+    return await _opMapper(
       func: () async {
         Collection? collection = await getCollection(
           reference: reference,
@@ -636,7 +637,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
 
         if (collection == null) return false;
 
-        bool results = updateDocumentsProxy(
+        bool results = _noSQLManager.updateDocumentsProxy(
           collection: collection,
           query: query,
           data: data,
@@ -652,7 +653,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
     required bool Function(Document document) query,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    return await opMapper(
+    return await _opMapper(
       func: () async {
         Collection? collection = await getCollection(
           reference: reference,
@@ -696,7 +697,7 @@ class NoSQLUtility extends Logging with NoSqlDocumentProxy {
     required bool Function(Document document) query,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) async {
-    return await opMapper(
+    return await _opMapper(
       func: () async {
         Collection? collection = await getCollection(
           reference: reference,

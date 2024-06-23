@@ -1,14 +1,13 @@
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/nosql_database.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/proxies/nosql_document_proxy.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_transactional/nosql_transactional_manager.dart';
 
-class NoSQLManager {
+class NoSQLManager with NoSqlDocumentProxy {
   final double _version = 1.0;
 
   NoSQLDatabase noSQLDatabase = NoSQLDatabase();
 
-  NoSQLManager._() {
-    noSQLDatabase.metaManger;
-  }
+  NoSQLManager._();
   static final _instance = NoSQLManager._();
   factory NoSQLManager() => _instance;
 
@@ -33,7 +32,7 @@ class NoSQLManager {
   }
 
   void setNoSqlDatabase(NoSQLDatabase db) {
-    noSQLDatabase = db;
+    // noSQLDatabase = db;
   }
 
   Future<bool> opMapper({required Future<bool> Function() func}) async {

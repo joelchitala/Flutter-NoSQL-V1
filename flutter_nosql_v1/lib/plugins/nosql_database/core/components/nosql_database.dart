@@ -1,11 +1,15 @@
 import 'dart:async';
 
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/entity_types.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/events.dart';
+import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/collection.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_components/database.dart';
 import 'package:flutter_nosql_v1/plugins/nosql_database/nosql_meta/nosql_meta_manager.dart';
 
 class NoSQLDatabase {
   final double _version = 1.0;
   NoSqlMetaManager metaManger = NoSqlMetaManager();
+  final EventStream _eventStream = EventStream();
 
   DateTime _timestamp = DateTime.now();
 
@@ -16,18 +20,51 @@ class NoSQLDatabase {
 
   NoSQLDatabase({
     this.inMemoryOnlyMode = false,
-  });
+  }) {
+    _eventStream.eventStream.listen(
+      (event) {
+        switch (event.event) {
+          case EventType.add:
+            break;
+          case EventType.update:
+            break;
+          case EventType.remove:
+            if (event.entityType == EntityType.collection) {
+              var obj = event.object as Collection;
+              metaManger.metaRestrictionObject.removeCollectionRestriction(
+                objectId: obj.objectId,
+              );
+            }
+            break;
+          default:
+        }
+      },
+    );
+  }
 
-  NoSQLDatabase? noSQLDatabaseCopy() {
+  // NoSQLDatabase? noSQLDatabaseCopy() {
+  //   try {
+  //     NoSQLDatabase noSQLDatabase = NoSQLDatabase();
+
+  //     noSQLDatabase.initialize(data: toJson(serialize: true));
+
+  //     return noSQLDatabase;
+  //   } catch (_) {}
+
+  //   return null;
+  // }
+
+  factory NoSQLDatabase.copy({
+    required NoSQLDatabase initialDB,
+    void Function(bool res)? callback,
+  }) {
+    NoSQLDatabase noSQLDatabase = NoSQLDatabase();
     try {
-      NoSQLDatabase noSQLDatabase = NoSQLDatabase();
-
-      noSQLDatabase.setDatabase(toJson(serialize: false));
-
-      return noSQLDatabase;
-    } catch (_) {}
-
-    return null;
+      noSQLDatabase.initialize(data: initialDB.toJson(serialize: true));
+    } catch (_) {
+      if (callback != null) callback(false);
+    }
+    return noSQLDatabase;
   }
 
   void setDatabase(Map<String, dynamic> data) {
@@ -54,6 +91,8 @@ class NoSQLDatabase {
           );
         },
       );
+
+      print(data["metaManger"]);
     } catch (e) {
       rethrow;
     }
@@ -81,14 +120,23 @@ class NoSQLDatabase {
     required Database database,
   }) {
     bool results = true;
-    var name = database.name;
+    var name = database.name.toLowerCase();
 
     if (databases.containsKey(name)) {
       return false;
     }
 
-    databases.addAll({database.name: database});
+    databases.addAll({name: database});
     _broadcastChanges();
+
+    _eventStream.broadcastEventStream<Database>(
+      eventNotifier: EventNotifier(
+        event: EventType.add,
+        entityType: EntityType.database,
+        object: database,
+      ),
+    );
+
     return results;
   }
 
@@ -98,7 +146,8 @@ class NoSQLDatabase {
   }) {
     bool results = true;
 
-    var object = databases[database.name];
+    var name = database.name.toLowerCase();
+    var object = databases[name];
 
     if (object == null) {
       return false;
@@ -106,6 +155,15 @@ class NoSQLDatabase {
 
     object.update(data: data);
     _broadcastChanges();
+
+    _eventStream.broadcastEventStream<Database>(
+      eventNotifier: EventNotifier(
+        event: EventType.update,
+        entityType: EntityType.database,
+        object: database,
+      ),
+    );
+
     return results;
   }
 
@@ -114,12 +172,21 @@ class NoSQLDatabase {
   }) {
     bool results = true;
 
-    var object = databases.remove(database.name);
+    var name = database.name.toLowerCase();
+    var object = databases.remove(name);
 
     if (object == null) {
       return false;
     }
     _broadcastChanges();
+
+    _eventStream.broadcastEventStream<Database>(
+      eventNotifier: EventNotifier(
+        event: EventType.remove,
+        entityType: EntityType.database,
+        object: database,
+      ),
+    );
 
     return results;
   }

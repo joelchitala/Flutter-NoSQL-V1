@@ -6,8 +6,6 @@ import 'package:flutter_nosql_v1/plugins/nosql_database/core/components/sub_comp
 class Database extends BaseComponent<Database, Collection> {
   String name;
   EntityType type = EntityType.database;
-  // final _streamController = StreamController<List<Collection>>.broadcast();
-
   Map<String, Collection> collections = {};
 
   Database({
@@ -59,30 +57,11 @@ class Database extends BaseComponent<Database, Collection> {
     return database;
   }
 
-  // Stream<List<Collection>> stream(
-  //     {bool Function(Collection collection)? query}) {
-  //   if (query != null) {
-  //     return _streamController.stream.map((collections) {
-  //       return collections.where(query).toList();
-  //     });
-  //   }
-
-  //   return _streamController.stream;
-  // }
-
-  // void broadcastObjectsChanges() {
-  //   _streamController.add(List<Collection>.from(collections.values.toList()));
-  // }
-
-  // void dispose() {
-  //   _streamController.close();
-  // }
-
   bool addCollection({
     required Collection collection,
   }) {
     bool results = true;
-    var name = collection.name;
+    var name = collection.name.toLowerCase();
 
     if (collections.containsKey(name)) {
       return false;
@@ -107,8 +86,8 @@ class Database extends BaseComponent<Database, Collection> {
     required Map<String, dynamic> data,
   }) {
     bool results = true;
-
-    var object = collections[collection.name];
+    var name = collection.name.toLowerCase();
+    var object = collections[name];
 
     if (object == null) {
       return false;
@@ -133,7 +112,8 @@ class Database extends BaseComponent<Database, Collection> {
   }) {
     bool results = true;
 
-    var object = collections.remove(collection.name);
+    var name = collection.name.toLowerCase();
+    var object = collections.remove(name);
 
     if (object == null) {
       return false;
@@ -153,7 +133,11 @@ class Database extends BaseComponent<Database, Collection> {
 
   @override
   void update({required Map<String, dynamic> data}) {
-    name = data["name"] ?? name;
+    // var updateName = data["name"];
+
+    // if (updateName != null) {
+    //   name = "$updateName".toLowerCase();
+    // }
   }
 
   @override

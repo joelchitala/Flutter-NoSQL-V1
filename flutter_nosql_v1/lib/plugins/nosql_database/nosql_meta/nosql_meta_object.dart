@@ -12,6 +12,15 @@ class NoSqlMetaRestrictionObject {
     return _collectionRestrictions[objectId];
   }
 
+  bool removeCollectionRestriction({required String objectId}) {
+    bool results = true;
+    if (_collectionRestrictions.remove(objectId) == null) {
+      return false;
+    }
+
+    return results;
+  }
+
   bool addRestriction({
     required String objectId,
     required RestrictionBuilder restrictionBuilder,
@@ -19,12 +28,12 @@ class NoSqlMetaRestrictionObject {
   }) {
     bool results = true;
 
-    var ref = _collectionRestrictions[objectId];
+    var ref = getRestrictionBuilder(objectId: objectId);
 
     if (ref == null) {
       _collectionRestrictions.addAll({objectId: restrictionBuilder});
 
-      return false;
+      return true;
     }
 
     bool res = true;
@@ -105,7 +114,7 @@ class NoSqlMetaRestrictionObject {
     return {
       "_collectionRestrictions": serialize
           ? collectionRestrictionsTempEntries
-          : _collectionRestrictions,
+          : Map<String, RestrictionBuilder>.from(_collectionRestrictions),
     };
   }
 }

@@ -36,9 +36,7 @@ class EventStream {
 
   EventStream._();
   static final _intance = EventStream._();
-
   factory EventStream() => _intance;
-
   Stream<EventNotifier> get eventStream => _controller.stream;
 
   void broadcastEventStream<T>({
