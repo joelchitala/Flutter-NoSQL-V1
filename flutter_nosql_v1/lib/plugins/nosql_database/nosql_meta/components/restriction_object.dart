@@ -115,6 +115,7 @@ class RestrictionFieldObject {
   bool validate({
     required Map<String, dynamic> json,
     List<Map<String, dynamic>>? dataList,
+    String? specificKey,
     Function(String? error)? callback,
   }) {
     var data = json[key];
@@ -140,9 +141,11 @@ class RestrictionFieldObject {
       if (!unique || dataList == null) return true;
 
       var obj = dataList.where((x) {
-        if (caseSensitive) return x[key] == data;
+        var temp = specificKey == null ? x[key] : x[specificKey][key];
 
-        return x[key].toString().toLowerCase() == data.toString().toLowerCase();
+        if (caseSensitive) return temp == data;
+
+        return "$temp".toLowerCase() == "$data".toLowerCase();
       }).firstOrNull;
 
       bool res = obj == null ? true : false;

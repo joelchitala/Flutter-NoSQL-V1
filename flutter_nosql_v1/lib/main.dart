@@ -61,14 +61,24 @@ class MainApp extends StatelessWidget {
               () async {
                 await sqlUtility.setRestrictions(
                   reference: "myriad.staff",
-                  builder: RestrictionBuilder().addValue(
-                    key: "age",
-                    expectedValues: [25],
-                    type: RestrictionValueTypes.eqgt,
-                    callback: ({error, res}) {
-                      print(error);
-                    },
-                  ),
+                  builder: RestrictionBuilder()
+                      .addField(
+                        key: "name",
+                        unique: true,
+                        expectedType: String,
+                      )
+                      .addValue(
+                        key: "age",
+                        expectedValues: [25],
+                        type: RestrictionValueTypes.eqgt,
+                      ),
+                );
+                await sqlUtility.insertDocument(
+                  reference: "myriad.staff",
+                  data: {
+                    "name": "Mike",
+                    "age": 35,
+                  },
                   callback: ({error, res}) {
                     print(error);
                   },
@@ -76,13 +86,33 @@ class MainApp extends StatelessWidget {
                 await sqlUtility.insertDocument(
                   reference: "myriad.staff",
                   data: {
-                    "name": "Jane",
-                    "age": 22,
+                    "name": "Mike",
+                    "age": 30,
                   },
                   callback: ({error, res}) {
                     print(error);
                   },
                 );
+                // await sqlUtility.insertDocument(
+                //   reference: "myriad.staff",
+                //   data: {
+                //     "name": "Jane",
+                //     "age": 22,
+                //   },
+                //   callback: ({error, res}) {
+                //     print(error);
+                //   },
+                // );
+                // await sqlUtility.insertDocument(
+                //   reference: "myriad.staff",
+                //   data: {
+                //     "name": 20,
+                //     "age": 22,
+                //   },
+                //   callback: ({error, res}) {
+                //     print(error);
+                //   },
+                // );
               },
             );
 

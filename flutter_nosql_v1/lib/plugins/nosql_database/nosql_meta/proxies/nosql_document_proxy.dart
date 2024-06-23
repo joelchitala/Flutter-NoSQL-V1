@@ -33,6 +33,7 @@ mixin NoSqlDocumentProxy {
     required Map<String, dynamic> data,
     required List<RestrictionFieldObject> objects,
     List<Map<String, dynamic>> dataList = const [],
+    String? specificKey,
     void Function({String? error, (bool res, String msg)? res})? callback,
   }) {
     bool results = true;
@@ -41,6 +42,7 @@ mixin NoSqlDocumentProxy {
       results = object.validate(
         json: data,
         dataList: dataList,
+        specificKey: specificKey,
         callback: (error) {
           if (callback != null) callback(error: error);
         },
@@ -89,6 +91,7 @@ mixin NoSqlDocumentProxy {
     results = fieldValidator(
       data: data,
       objects: builder?.fieldObjectsList ?? [],
+      specificKey: "fields",
       dataList: dataList,
       callback: callback,
     );
@@ -128,6 +131,7 @@ mixin NoSqlDocumentProxy {
         data: field,
         objects: builder?.fieldObjectsList ?? [],
         dataList: dataList,
+        specificKey: "fields",
         callback: callback,
       );
 
@@ -177,6 +181,7 @@ mixin NoSqlDocumentProxy {
       data: data,
       objects: builder?.fieldObjectsList ?? [],
       dataList: dataList,
+      specificKey: "fields",
       callback: callback,
     );
 
@@ -233,6 +238,7 @@ mixin NoSqlDocumentProxy {
       data: data,
       objects: builder?.fieldObjectsList ?? [],
       dataList: dataList,
+      specificKey: "fields",
       callback: callback,
     );
 
