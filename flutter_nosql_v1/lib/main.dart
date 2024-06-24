@@ -3,12 +3,18 @@ import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/addons/nosql_uti
 import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/wrapper/nosql_stateful_wrapper.dart';
 import 'package:flutter_nosql_v1/ui/screens/nosql_database_screen.dart';
 
-Future<void> initDB(NoSQlInitilizationObject initilizationObject) async {
+// bool initializeFromDisk = true;
+// String databasePath = "database.json";
+
+Future<void> initDB({
+  required bool initializeFromDisk,
+  required String databasePath,
+}) async {
   NoSQLUtility noSQLUtility = NoSQLUtility();
   try {
-    if (initilizationObject.initializeFromDisk) {
+    if (initializeFromDisk) {
       await noSQLUtility.initialize(
-        databasePath: initilizationObject.databasePath,
+        databasePath: databasePath,
       );
     }
   } catch (_) {}
@@ -16,7 +22,10 @@ Future<void> initDB(NoSQlInitilizationObject initilizationObject) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initDB(NoSQlInitilizationObject(initializeFromDisk: true));
+  await initDB(
+    initializeFromDisk: true,
+    databasePath: "database.json",
+  );
   runApp(const MainApp());
 }
 
@@ -31,6 +40,7 @@ class MainApp extends StatelessWidget {
         body: NoSQLStatefulWrapper(
           initializeFromDisk: true,
           checkPermissions: true,
+          databasePath: "database.json",
           body: NoSQLDatabaseScreen(),
           commitStates: [
             AppLifecycleState.inactive,

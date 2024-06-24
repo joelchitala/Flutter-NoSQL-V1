@@ -4,16 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/addons/nosql_utilities.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-class NoSQlInitilizationObject {
-  String databasePath;
-  bool initializeFromDisk;
-
-  NoSQlInitilizationObject({
-    required this.initializeFromDisk,
-    this.databasePath = "database.json",
-  });
-}
-
 class NoSQLStatefulWrapper extends StatefulWidget {
   final Function({
     String? error,
@@ -31,7 +21,7 @@ class NoSQLStatefulWrapper extends StatefulWidget {
     required this.initializeFromDisk,
     required this.checkPermissions,
     required this.body,
-    this.databasePath = "database.json",
+    required this.databasePath,
     this.callback,
     this.commitStates = const [],
   });
