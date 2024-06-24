@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'base_component.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/base_component.dart';
 
 enum EventType {
   add,

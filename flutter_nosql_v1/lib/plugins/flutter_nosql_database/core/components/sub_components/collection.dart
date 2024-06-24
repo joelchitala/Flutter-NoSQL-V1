@@ -1,5 +1,5 @@
-import '../base_component.dart';
-import 'document.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/base_component.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/sub_components/document.dart';
 
 class Collection extends BaseComponent<Collection, Document> {
   String name;

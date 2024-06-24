@@ -1,4 +1,4 @@
-import '../base_component.dart';
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/base_component.dart';
 
 class Document extends BaseComponent {
   EntityType type = EntityType.document;

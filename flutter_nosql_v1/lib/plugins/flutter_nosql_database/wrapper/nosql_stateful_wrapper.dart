@@ -1,10 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/addons/nosql_utilities.dart';
 import 'package:permission_handler/permission_handler.dart';
-
-import '../addons/nosql_utilities.dart';
 
 class NoSQLStatefulWrapper extends StatefulWidget {
   final Function({
