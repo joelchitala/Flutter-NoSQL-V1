@@ -1,15 +1,12 @@
-import 'dart:async';
-
-import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/base_component.dart';
-import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/components/sub_components/database.dart';
-import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/meta/nosql_meta_manager.dart';
-import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/utils/core_utils.dart';
+import '../meta/nosql_meta_manager.dart';
+import '../utils/core_utils.dart';
+import 'base_component.dart';
+import 'sub_components/database.dart';
 
 class NoSQLDatabase extends BaseComponent<NoSQLDatabase, Database> {
   final double _version = 1.0;
   NoSqlMetaManager metaManger = NoSqlMetaManager();
 
-  final _streamController = StreamController<List<Database>>.broadcast();
   Database? currentDatabase;
   bool inMemoryOnlyMode;
 
@@ -60,24 +57,6 @@ class NoSQLDatabase extends BaseComponent<NoSQLDatabase, Database> {
     }
   }
 
-  Stream<List<Database>> stream({bool Function(Database database)? query}) {
-    if (query != null) {
-      return _streamController.stream.map((objects) {
-        return objects.where(query).toList();
-      });
-    }
-
-    return _streamController.stream;
-  }
-
-  void _broadcastChanges() {
-    _streamController.add(List<Database>.from(objects.values.toList()));
-  }
-
-  void dispose() {
-    _streamController.close();
-  }
-
   bool addDatabase({
     required Database database,
   }) {
@@ -89,7 +68,7 @@ class NoSQLDatabase extends BaseComponent<NoSQLDatabase, Database> {
     }
 
     objects.addAll({name: database});
-    _broadcastChanges();
+    broadcastObjectsChanges();
 
     return results;
   }
@@ -122,7 +101,7 @@ class NoSQLDatabase extends BaseComponent<NoSQLDatabase, Database> {
     }
 
     object.update(data: data);
-    _broadcastChanges();
+    broadcastObjectsChanges();
 
     return results;
   }
@@ -138,7 +117,7 @@ class NoSQLDatabase extends BaseComponent<NoSQLDatabase, Database> {
     if (object == null) {
       return false;
     }
-    _broadcastChanges();
+    broadcastObjectsChanges();
 
     return results;
   }

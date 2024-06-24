@@ -1,4 +1,4 @@
-import 'package:flutter_nosql_v1/plugins/flutter_nosql_database/core/meta/components/sub_components/restriction_object.dart';
+import 'sub_components/restriction_object.dart';
 
 class NoSqlMetaRestrictionObject {
   final Map<String, RestrictionBuilder> _collectionRestrictions = {};
