@@ -103,12 +103,27 @@ class Document extends BaseComponent {
   }
 
   @override
+  bool commit({required Map<String, dynamic> data}) {
+    bool results = true;
+
+    if (fields.toString() == data.toString()) {
+      return true;
+    }
+
+    fields = data;
+
+    broadcastObjectsChanges();
+
+    return results;
+  }
+
+  @override
   Map<String, dynamic> toJson({required bool serialize}) {
     return super.toJson(serialize: serialize)
       ..addAll(
         {
           "type": serialize ? type.toString() : type,
-          "fields": serialize ? Map<String, dynamic>.from(fields) : false,
+          "fields": serialize ? Map<String, dynamic>.from(fields) : fields,
         },
       );
   }

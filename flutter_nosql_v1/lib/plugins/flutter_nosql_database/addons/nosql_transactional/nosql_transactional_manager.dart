@@ -44,7 +44,7 @@ class NoSQLTransactionalManager {
     return 0;
   }
 
-  Future<void> commit(NoSQLDatabase db) async {
-    _noSqlManager.setNoSqlDatabase(db);
+  Future<bool> commit(NoSQLDatabase db) async {
+    return _noSqlManager.setNoSqlDatabase(db);
   }
 }
