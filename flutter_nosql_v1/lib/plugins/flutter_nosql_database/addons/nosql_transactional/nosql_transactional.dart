@@ -30,10 +30,10 @@ class NoSQLTransactional {
   Future<int> mount() async {
     return _transactionalManager.mount(
       this,
-      (noSQLDatabase) {
+      (db) {
         if (_noSQLDatabase != null) return;
 
-        _noSQLDatabase = noSQLDatabase;
+        _noSQLDatabase = db;
       },
     );
   }

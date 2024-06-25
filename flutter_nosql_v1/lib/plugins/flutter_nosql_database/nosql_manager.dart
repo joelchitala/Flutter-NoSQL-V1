@@ -10,7 +10,7 @@ class NoSQLManager with NoSqlDocumentProxy {
   final double _version = 1.0;
   final EventStream _eventStream = EventStream();
 
-  NoSQLDatabase _noSQLDatabase = NoSQLDatabase(
+  final NoSQLDatabase _noSQLDatabase = NoSQLDatabase(
     objectId: generateUUID(),
   );
 
@@ -59,8 +59,12 @@ class NoSQLManager with NoSqlDocumentProxy {
     return _noSQLDatabase;
   }
 
-  void setNoSqlDatabase(NoSQLDatabase db) {
-    _noSQLDatabase = db;
+  bool setNoSqlDatabase(NoSQLDatabase db) {
+    bool results = true;
+    results = _noSQLDatabase.commit(
+      data: db.toJson(serialize: false)["objects"],
+    );
+    return results;
   }
 
   Future<bool> opMapper({required Future<bool> Function() func}) async {

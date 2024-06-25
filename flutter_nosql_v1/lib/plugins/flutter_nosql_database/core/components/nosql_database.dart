@@ -26,9 +26,7 @@ class NoSQLDatabase extends BaseComponent<NoSQLDatabase, Database> {
 
   void setDatabase(Map<String, dynamic> data) {
     inMemoryOnlyMode = data["inMemoryOnlyMode"] ?? inMemoryOnlyMode;
-    objects = data["objects"] == null
-        ? objects
-        : Map<String, Database>.from(data["objects"]);
+    objects = data["objects"] ?? objects;
 
     metaManger = data["metaManger"] ?? metaManger;
   }
@@ -141,7 +139,6 @@ class NoSQLDatabase extends BaseComponent<NoSQLDatabase, Database> {
         {
           "version": _version,
           "inMemoryOnlyMode": inMemoryOnlyMode,
-          "objects": serialize ? databaseEntries : objects,
           "metaManger": serialize
               ? metaManger.toJson(
                   serialize: serialize,

@@ -108,7 +108,7 @@ class Document extends BaseComponent {
       ..addAll(
         {
           "type": serialize ? type.toString() : type,
-          "fields": serialize ? fields : fields,
+          "fields": serialize ? Map<String, dynamic>.from(fields) : false,
         },
       );
   }
